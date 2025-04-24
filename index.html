@@ -111,6 +111,7 @@
   measurementId: "G-D5H6XV6GHE"
 };
     const app = initializeApp(firebaseConfig);
+    console.log("● Firebase projectId:", app.options.projectId);
     const db = getFirestore(app);
     
     // グローバル変数
