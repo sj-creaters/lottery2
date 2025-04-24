@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スケジュール設定</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .nav-btn {
+      display: block;
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px 16px;
+      font-size: 16px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      width: 200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    form {
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 10px;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    form .form-group {
+      margin-bottom: 15px;
+    }
+    form label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    form input[type="date"],
+    form input[type="time"],
+    form input[type="number"],
+    form select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    form button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    table th, table td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    table th {
+      background-color: #f0f0f0;
+    }
+    .executed {
+      color: green;
+      font-weight: bold;
+    }
+    .action-btn {
+      padding: 4px 8px;
+      font-size: 14px;
+      margin: 2px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 上部ナビゲーション -->
+  <a class="nav-btn" href="https://enchanted-synonymous-beast.glitch.me/index.html">メイン画面に戻る</a>
+  
+  <h2>スケジュール設定</h2>
+  
+  <!-- スケジュール登録フォーム -->
+  <form id="scheduleForm">
+    <div class="form-group">
+      <label for="targetPrize">対象賞</label>
+      <select id="targetPrize" required>
+        <option value="">選択してください</option>
+        <!-- オプションは Firebase の "prizes" から動的に読み込み -->
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="bonusDay">適用日 (YYYY-MM-DD)</label>
+      <input type="date" id="bonusDay" required>
+    </div>
+    <div class="form-group">
+      <label for="bonusTime">適用時刻 (HH:MM)</label>
+      <input type="time" id="bonusTime" required>
+    </div>
+    <div class="form-group">
+      <label for="bonusCount">追加賞数</label>
+      <input type="number" id="bonusCount" required min="0" placeholder="例: 3">
+    </div>
+    <button type="submit">スケジュール登録</button>
+  </form>
+  
+  <!-- スケジュール一覧テーブル -->
+  <table id="scheduleTable">
+    <thead>
+      <tr>
+        <th>対象賞</th>
+        <th>適用日</th>
+        <th>適用時刻</th>
+        <th>追加賞数</th>
+        <th>状態</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- スケジュール一覧がここに挿入されます -->
+    </tbody>
+  </table>
+  
+  <!-- 下部ナビゲーション -->
+  <a class="nav-btn" href="https://enchanted-synonymous-beast.glitch.me/index.html">メイン画面に戻る</a>
+  
+  <script type="module">
+    // Firebase SDK のインポート
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import { 
+      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc 
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyA50uDr4LVMasAode1in9l07O5DABh4DzU",
+      authDomain: "lottery-15223.firebaseapp.com",
+      projectId: "lottery-15223",
+      storageBucket: "lottery-15223.firebasestorage.app",
+      messagingSenderId: "82082482343",
+      appId: "1:82082482343:web:af3a3bbcd6d0740078f382",
+      measurementId: "G-Z9C5H639G1"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // スケジュールコレクション
+    const scheduleCol = collection(db, "bonusSchedules");
+    
+    // 対象賞のセレクト欄を Firebase の "prizes" から動的に読み込む
+    const targetPrizeSelect = document.getElementById("targetPrize");
+    onSnapshot(collection(db, "prizes"), (snapshot) => {
+      targetPrizeSelect.innerHTML = `<option value="">選択してください</option>`;
+      snapshot.forEach(docSnap => {
+        const prize = docSnap.data();
+        prize.id = docSnap.id;
+        const option = document.createElement("option");
+        option.value = prize.id;
+        option.textContent = prize.name;
+        targetPrizeSelect.appendChild(option);
+      });
+    });
+    
+    // スケジュール登録処理
+    document.getElementById("scheduleForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const targetPrizeId = targetPrizeSelect.value;
+      if (!targetPrizeId) {
+        alert("対象賞を選択してください。");
+        return;
+      }
+      // 対象賞名は、セレクトの表示テキストから取得
+      const targetPrizeName = targetPrizeSelect.options[targetPrizeSelect.selectedIndex].text;
+      const bonusDay = document.getElementById("bonusDay").value;
+      const bonusTime = document.getElementById("bonusTime").value;
+      const bonusCount = Number(document.getElementById("bonusCount").value);
+      if (!bonusDay || !bonusTime || isNaN(bonusCount)) {
+        alert("すべての項目を正しく入力してください。");
+        return;
+      }
+      try {
+        await addDoc(scheduleCol, {
+          targetPrizeId: targetPrizeId,
+          targetPrizeName: targetPrizeName,
+          bonusDay: bonusDay,
+          bonusTime: bonusTime,
+          bonusCount: bonusCount,
+          executed: false,
+          createdAt: new Date()
+        });
+        alert("スケジュールが登録されました。");
+        document.getElementById("scheduleForm").reset();
+      } catch (error) {
+        console.error("スケジュール登録エラー:", error);
+        alert("スケジュール登録エラー：" + error);
+      }
+    });
+    
+    // スケジュール一覧のリアルタイム表示
+    const scheduleTableBody = document.querySelector("#scheduleTable tbody");
+    onSnapshot(scheduleCol, (snapshot) => {
+      scheduleTableBody.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        // 組み立てた日時
+        const scheduledDateTime = new Date(data.bonusDay + "T" + data.bonusTime);
+        const now = new Date();
+        const isPast = now > scheduledDateTime;
+        const executed = data.executed;
+        
+        const tr = document.createElement("tr");
+        
+        // 対象賞
+        const tdPrize = document.createElement("td");
+        tdPrize.textContent = data.targetPrizeName || "";
+        tr.appendChild(tdPrize);
+        
+        // 適用日
+        const tdDay = document.createElement("td");
+        tdDay.textContent = data.bonusDay;
+        tr.appendChild(tdDay);
+        
+        // 適用時刻
+        const tdTime = document.createElement("td");
+        tdTime.textContent = data.bonusTime;
+        tr.appendChild(tdTime);
+        
+        // 追加賞数
+        const tdCount = document.createElement("td");
+        tdCount.textContent = data.bonusCount;
+        tr.appendChild(tdCount);
+        
+        // 状態
+        const tdStatus = document.createElement("td");
+        if (executed) {
+          tdStatus.textContent = "実行済み";
+          tdStatus.className = "executed";
+        } else {
+          tdStatus.textContent = isPast ? "未実行（時間経過）" : "未実行";
+        }
+        tr.appendChild(tdStatus);
+        
+        // 操作（実行または削除）
+        const tdActions = document.createElement("td");
+        if (!executed && isPast) {
+          const execBtn = document.createElement("button");
+          execBtn.textContent = "実行";
+          execBtn.className = "action-btn";
+          execBtn.addEventListener("click", async () => {
+            try {
+              await updateDoc(doc(db, "bonusSchedules", id), { executed: true, executedAt: new Date() });
+              alert("スケジュールが実行されました。");
+            } catch (error) {
+              console.error("実行エラー:", error);
+              alert("実行エラー：" + error);
+            }
+          });
+          tdActions.appendChild(execBtn);
+        }
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "削除";
+        delBtn.className = "action-btn";
+        delBtn.addEventListener("click", async () => {
+          if (confirm("このスケジュールを削除してもよろしいですか？")) {
+            try {
+              await deleteDoc(doc(db, "bonusSchedules", id));
+              alert("スケジュールが削除されました。");
+            } catch (error) {
+              console.error("削除エラー:", error);
+              alert("削除エラー：" + error);
+            }
+          }
+        });
+        tdActions.appendChild(delBtn);
+        tr.appendChild(tdActions);
+        
+        scheduleTableBody.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>

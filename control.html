@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抽選賞設定（Control Page）</title>
+  <style>
+    /* 基本スタイル */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select {
+      padding: 8px;
+      width: 100%;
+      max-width: 300px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+    }
+    .message {
+      margin-top: 10px;
+      color: green;
+    }
+    /* 表示リスト用テーブル */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 600px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    /* ナビゲーションボタン */
+    .nav-btn {
+      display: block;
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px 16px;
+      font-size: 16px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      width: 200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- 上部：メイン画面に戻るボタン -->
+  <a class="nav-btn" href="index.html">メイン画面に戻る</a>
+  
+  <h2>抽選賞設定 (Control Page)</h2>
+  <form id="prizeForm">
+    <!-- 賞順位は自動付番のため、入力欄は不要 -->
+    <label for="prizeName">賞名称</label>
+    <input type="text" id="prizeName" name="prizeName" required placeholder="例：スターバックス賞">
+
+    <label for="prizeQuantity">数量</label>
+    <input type="number" id="prizeQuantity" name="prizeQuantity" required placeholder="例：5">
+
+    <label for="prizeCategory">賞区分</label>
+    <select id="prizeCategory" name="prizeCategory" required>
+      <option value="">選択してください</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+    </select>
+
+    <button type="submit">登録</button>
+  </form>
+  
+  <div class="message" id="message"></div>
+  
+  <!-- 登録済み賞情報の表示領域 -->
+  <div id="prizeList"></div>
+  
+  <!-- データ初期化ボタン -->
+  <button id="resetBtn" style="margin-top: 20px; padding: 8px 16px;">データ初期化</button>
+  
+  <!-- 下部：メイン画面に戻るボタン -->
+  <a class="nav-btn" href="index.html">メイン画面に戻る</a>
+  
+  <!-- Firebase SDK のモジュールをインポート -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+    
+    // Firebase コンソールから取得した設定情報
+    const firebaseConfig = {
+      apiKey: "AIzaSyA50uDr4LVMasAode1in9l07O5DABh4DzU",
+      authDomain: "lottery-15223.firebaseapp.com",
+      projectId: "lottery-15223",
+      storageBucket: "lottery-15223.firebasestorage.app",
+      messagingSenderId: "82082482343",
+      appId: "1:82082482343:web:af3a3bbcd6d0740078f382",
+      measurementId: "G-Z9C5H639G1"
+    };
+
+    // Firebase の初期化
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    // DOM要素の取得
+    const prizeForm = document.getElementById("prizeForm");
+    const messageDiv = document.getElementById("message");
+    const prizeListDiv = document.getElementById("prizeList");
+    const resetBtn = document.getElementById("resetBtn");
+
+    // フォーム送信時にFirestoreへ賞情報を登録（自動付番付き）
+    prizeForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const prizeNameInput = document.getElementById("prizeName");
+      const prizeQuantityInput = document.getElementById("prizeQuantity");
+      const prizeCategorySelect = document.getElementById("prizeCategory");
+
+      const prizeName = prizeNameInput.value.trim();
+      const prizeQuantity = prizeQuantityInput.value;
+      const prizeCategory = prizeCategorySelect.value;
+      
+      // 自動付番のため、現在の最大賞順位を取得
+      let newRank = 1;
+      try {
+        const maxRankQuery = query(collection(db, "prizes"), orderBy("rank", "desc"), limit(1));
+        const querySnapshot = await getDocs(maxRankQuery);
+        if (!querySnapshot.empty) {
+          const maxRank = querySnapshot.docs[0].data().rank;
+          newRank = maxRank + 1;
+        }
+      } catch (error) {
+        console.error("自動付番の取得エラー:", error);
+      }
+      
+      try {
+        // 賞情報を追加
+        const docRef = await addDoc(collection(db, "prizes"), {
+          rank: newRank,
+          name: prizeName,
+          quantity: Number(prizeQuantity),
+          category: prizeCategory,
+          createdAt: new Date()
+        });
+        messageDiv.textContent = "登録成功！（ドキュメントID：" + docRef.id + "）";
+        console.log("登録成功:", docRef.id);
+        
+        // 入力欄を明示的にクリア
+        prizeNameInput.value = "";
+        prizeQuantityInput.value = "";
+        prizeCategorySelect.selectedIndex = 0;
+      } catch (error) {
+        console.error("登録エラー:", error);
+        messageDiv.textContent = "登録エラー：" + error;
+      }
+    });
+
+    // Firestore の "prizes" コレクションから賞情報をリアルタイムに取得して表示
+    const prizeListQuery = query(collection(db, "prizes"), orderBy("rank", "asc"));
+    onSnapshot(prizeListQuery, (snapshot) => {
+      console.log("onSnapshot 更新:", snapshot.docs.length, "件のドキュメント");
+      let listHtml = "<h3>登録されている賞情報</h3>";
+      listHtml += "<table><tr><th>賞順位</th><th>賞名称</th><th>数量</th><th>賞区分</th></tr>";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        listHtml += `<tr>
+                       <td>${data.rank}</td>
+                       <td>${data.name}</td>
+                       <td>${data.quantity}</td>
+                       <td>${data.category}</td>
+                     </tr>`;
+      });
+      listHtml += "</table>";
+      prizeListDiv.innerHTML = listHtml;
+    }, (error) => {
+      console.error("onSnapshot エラー:", error);
+    });
+
+    // データ初期化ボタン押下時の処理（賞データおよび履歴の両方を削除）
+    resetBtn.addEventListener("click", async () => {
+      if (!confirm("本当に賞データと履歴を初期化して削除しますか？")) {
+        return;
+      }
+      try {
+        // 賞データの削除
+        const prizesCollection = collection(db, "prizes");
+        const prizesSnapshot = await getDocs(prizesCollection);
+        const deletePromisesPrizes = [];
+        prizesSnapshot.forEach(docSnapshot => {
+          deletePromisesPrizes.push(deleteDoc(doc(db, "prizes", docSnapshot.id)));
+        });
+        await Promise.all(deletePromisesPrizes);
+        
+        // 履歴データの削除
+        const historyCollection = collection(db, "history");
+        const historySnapshot = await getDocs(historyCollection);
+        const deletePromisesHistory = [];
+        historySnapshot.forEach(docSnapshot => {
+          deletePromisesHistory.push(deleteDoc(doc(db, "history", docSnapshot.id)));
+        });
+        await Promise.all(deletePromisesHistory);
+        
+        messageDiv.textContent = "賞データと履歴を初期化しました。";
+        console.log("初期化完了");
+      } catch (error) {
+        console.error("データ初期化エラー:", error);
+        messageDiv.textContent = "データ初期化エラー：" + error;
+      }
+    });
+  </script>
+</body>
+</html>
+

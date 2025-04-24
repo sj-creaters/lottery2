@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抽選履歴</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .nav-btn {
+      display: block;
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px 16px;
+      font-size: 16px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      width: 200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <!-- 最上段のメイン画面に戻るボタン -->
+  <a class="nav-btn" href="index.html">メイン画面に戻る</a>
+  
+  <h2>抽選履歴</h2>
+  
+  <!-- 履歴表示用テーブル -->
+  <table id="historyTable">
+    <thead>
+      <tr>
+        <th>賞名称</th>
+        <th>日付</th>
+        <th>時間</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- リアルタイム更新で履歴が挿入されます -->
+    </tbody>
+  </table>
+  
+  <!-- 最下段のメイン画面に戻るボタン -->
+  <a class="nav-btn" href="index.html">メイン画面に戻る</a>
+  
+  <!-- Firebase SDK のモジュールをインポート -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+    
+    // Firebase コンソールから取得した設定情報（control.html と同一の設定を利用）
+    const firebaseConfig = {
+      apiKey: "AIzaSyA50uDr4LVMasAode1in9l07O5DABh4DzU",
+      authDomain: "lottery-15223.firebaseapp.com",
+      projectId: "lottery-15223",
+      storageBucket: "lottery-15223.firebasestorage.app",
+      messagingSenderId: "82082482343",
+      appId: "1:82082482343:web:af3a3bbcd6d0740078f382",
+      measurementId: "G-Z9C5H639G1"
+    };
+    
+    // Firebase の初期化と Firestore の取得
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    const historyTableBody = document.querySelector("#historyTable tbody");
+    
+    // history コレクションのデータを、timestamp（最新順＝降順）で取得
+    const historyQuery = query(collection(db, "history"), orderBy("timestamp", "desc"));
+    
+    onSnapshot(historyQuery, (snapshot) => {
+      // テーブルをクリア
+      historyTableBody.innerHTML = "";
+      snapshot.forEach(docSnapshot => {
+        const data = docSnapshot.data();
+        // timestamp が Firestore Timestamp オブジェクトの場合は、toDate() で変換
+        let dateObj = (data.timestamp && data.timestamp.toDate) ? data.timestamp.toDate() : new Date(data.timestamp);
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString();
+        
+        const tr = document.createElement("tr");
+        const tdPrize = document.createElement("td");
+        tdPrize.textContent = data.prizeName || "";
+        const tdDate = document.createElement("td");
+        tdDate.textContent = dateStr;
+        const tdTime = document.createElement("td");
+        tdTime.textContent = timeStr;
+        
+        tr.appendChild(tdPrize);
+        tr.appendChild(tdDate);
+        tr.appendChild(tdTime);
+        historyTableBody.appendChild(tr);
+      });
+    }, (error) => {
+      console.error("履歴取得エラー:", error);
+    });
+  </script>
+</body>
+</html>

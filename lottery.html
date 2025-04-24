@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>抽選アニメーション</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #pageTitle {
+      text-align: center;
+      font-size: 28px;
+      margin: 20px 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+    }
+    .center-container {
+      position: relative;
+      margin: 20px auto;
+      max-width: 600px;
+      text-align: center;
+      overflow: hidden;
+    }
+    #centerImage {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .prizes-overlay {
+      position: absolute;
+      top: 30%;
+      left: 0;
+      right: 0;
+      bottom: 30%;
+      display: grid;
+      gap: 10px;
+      pointer-events: none;
+      padding: 10px;
+      box-sizing: border-box;
+      grid-template-columns: repeat(3, 1fr);
+      justify-items: center;
+      align-items: center;
+      justify-content: center;
+    }
+    .tile {
+      width: 97%;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border: 2px solid #aaa;
+      font-size: 14px;
+      font-family: 'Arial Black', Gadget, sans-serif;
+      font-weight: bold;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+      background-color: rgba(255, 255, 255, 0.95);
+      color: #333;
+      box-sizing: border-box;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+    .active {
+      background-color: yellow;
+      border-color: orange;
+    }
+    .winner {
+      background-color: magenta;
+      border-color: red;
+      color: white;
+    }
+    .start-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      background-color: rgba(255, 0, 0, 0.9);
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 10;
+      transition: transform 0.2s;
+    }
+    .start-btn:active {
+      transform: translateX(-50%) scale(0.95);
+    }
+    #resultMessage {
+      text-align: center;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    @media (max-width: 768px) {
+      .tile {
+        font-size: 14px;
+      }
+    }
+    @media (max-width: 480px) {
+      .tile {
+        font-size: 12px;
+      }
+      .start-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 14px;
+        bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="pageTitle"></div>
+
+  <div class="center-container" id="centerContainer">
+    <img id="centerImage" src="" alt="中央画像" />
+    <div id="tilesOverlay" class="prizes-overlay"></div>
+    <button id="startBtn" class="start-btn">スタート</button>
+  </div>
+
+  <div id="resultMessage"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import { 
+      getFirestore, collection, query, orderBy, onSnapshot,
+      doc, getDoc, getDocs, addDoc 
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA50uDr4LVMasAode1in9l07O5DABh4DzU",
+      authDomain: "lottery-15223.firebaseapp.com",
+      projectId: "lottery-15223",
+      storageBucket: "lottery-15223.firebasestorage.app",
+      messagingSenderId: "82082482343",
+      appId: "1:82082482343:web:af3a3bbcd6d0740078f382",
+      measurementId: "G-Z9C5H639G1"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const configDocRef = doc(db, "displaySettings", "config");
+    async function loadDisplayConfig() {
+      const docSnap = await getDoc(configDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const titleElem = document.getElementById("pageTitle");
+        if (data.titleVisible !== false && data.title) {
+          titleElem.textContent = data.title;
+          titleElem.style.display = "block";
+        } else {
+          titleElem.style.display = "none";
+        }
+        const bgUrl = data.currentBgImageUrl || "";
+        if (bgUrl) {
+          document.body.style.backgroundImage = `url('${bgUrl}')`;
+          document.body.style.backgroundRepeat = "repeat";
+        }
+        const centerUrl = data.currentCenterImageUrl || "";
+        document.getElementById("centerImage").src = centerUrl;
+      }
+    }
+    loadDisplayConfig();
+
+    const tilesOverlay = document.getElementById("tilesOverlay");
+    let prizesList = [];
+    const prizesQuery = query(collection(db, "prizes"), orderBy("rank", "asc"));
+    onSnapshot(prizesQuery, (snapshot) => {
+      prizesList = [];
+      tilesOverlay.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const prize = { id: docSnap.id, ...docSnap.data() };
+        prizesList.push(prize);
+      });
+      const colCount = Math.min(prizesList.length, 3);
+      tilesOverlay.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
+      prizesList.forEach(prize => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.textContent = prize.name;
+        tile.dataset.id = prize.id;
+        tilesOverlay.appendChild(tile);
+        setTimeout(() => {
+          tile.style.textAlign = tile.scrollWidth > tile.clientWidth ? "left" : "center";
+        }, 0);
+      });
+    });
+
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep() {
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = "square";
+      osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    let running = false;
+    let currentDelay = 100;
+    let deceleration = 20;
+    let timerId;
+    let prevIndex = -1;
+    let preselectedWinner = null;
+    let startTime = 0;
+
+    async function preselectWinner() {
+      const historySnapshot = await getDocs(collection(db, "history"));
+      const counts = {};
+      historySnapshot.forEach(docSnap => {
+        const id = docSnap.data().prizeId;
+        counts[id] = (counts[id] || 0) + 1;
+      });
+      const weighted = [];
+      let total = 0;
+      prizesList.forEach(prize => {
+        const remaining = prize.quantity - (counts[prize.id] || 0);
+        if (remaining > 0) {
+          weighted.push({ prize, weight: remaining });
+          total += remaining;
+        }
+      });
+      if (total <= 0) {
+        preselectedWinner = null;
+        return;
+      }
+      let r = Math.random() * total;
+      for (const item of weighted) {
+        r -= item.weight;
+        if (r <= 0) {
+          preselectedWinner = item.prize;
+          break;
+        }
+      }
+    }
+
+    function clearActive() {
+      document.querySelectorAll(".tile").forEach(t => t.classList.remove("active", "winner"));
+    }
+
+    function getRandomIndex(max, exclude) {
+      if (max <= 1) return 0;
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * max);
+      } while (idx === exclude);
+      return idx;
+    }
+
+    function animate() {
+      const tiles = document.querySelectorAll(".tile");
+      if (tiles.length === 0) {
+        running = false;
+        return;
+      }
+      clearActive();
+      const idx = getRandomIndex(tiles.length, prevIndex);
+      tiles[idx].classList.add("active");
+      prevIndex = idx;
+      beep();
+      if (Date.now() - startTime >= 3000) currentDelay += deceleration;
+      const maxD = preselectedWinner && preselectedWinner.category === "A" ? 550 : 500;
+      if (currentDelay >= maxD) {
+        running = false;
+        clearTimeout(timerId);
+        beep();
+        finishAnimation();
+        return;
+      }
+      timerId = setTimeout(animate, currentDelay);
+    }
+
+    async function recordWinner(winner) {
+      await addDoc(collection(db, "history"), {
+        prizeId: winner.id,
+        prizeName: winner.name,
+        rank: winner.rank,
+        timestamp: new Date()
+      }).catch(error => console.error(error));
+    }
+
+    async function finishAnimation() {
+      const msgElem = document.getElementById("resultMessage");
+      if (!preselectedWinner) {
+        msgElem.textContent = "抽選結果：当たる賞はありません。";
+        document.getElementById("startBtn").style.visibility = "visible";
+        return;
+      }
+      const tiles = Array.from(document.querySelectorAll(".tile"));
+      const winIdx = tiles.findIndex(t => t.dataset.id === preselectedWinner.id);
+      if (winIdx < 0) return;
+      clearActive();
+      tiles[winIdx].classList.add("active");
+      await recordWinner(preselectedWinner);
+      let blink = 0;
+      const interval = setInterval(() => {
+        tiles[winIdx].classList.toggle("winner");
+        if (++blink >= 15) {
+          clearInterval(interval);
+          tiles[winIdx].classList.add("winner");
+          document.getElementById("startBtn").style.visibility = "visible";
+        }
+        beep();
+      }, 200);
+    }
+
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      clearActive();
+      await preselectWinner();
+      if (!preselectedWinner) {
+        alert("抽選対象となる賞がありません。");
+        return;
+      }
+      deceleration = preselectedWinner.category === "A" ? 17 : 20;
+      document.getElementById("startBtn").style.visibility = "hidden";
+      running = true;
+      currentDelay = 100;
+      prevIndex = -1;
+      document.getElementById("resultMessage").textContent = "";
+      startTime = Date.now();
+      animate();
+    });
+  </script>
+</body>
+</html>

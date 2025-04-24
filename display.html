@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display 設定</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .nav-btn {
+      display: block;
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px 16px;
+      font-size: 16px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      width: 200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    .section {
+      border: 1px solid #aaa;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      max-width: 400px;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+    img.preview {
+      max-width: 400px;
+      margin-top: 10px;
+      display: block;
+    }
+    hr {
+      margin: 30px 0;
+    }
+    .image-option {
+      display: inline-block;
+      margin: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+      padding: 5px;
+      border-radius: 4px;
+    }
+    .image-option input[type="radio"] {
+      margin-bottom: 5px;
+    }
+    .thumb {
+      max-width: 150px;
+      display: block;
+      margin: 5px auto;
+    }
+    .delete-btn {
+      display: block;
+      margin-top: 5px;
+      padding: 4px 8px;
+      font-size: 12px;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- 上部ナビゲーション -->
+  <a class="nav-btn" href="index.html">メイン画面に戻る</a>
+  
+  <h2>Display 設定</h2>
+  
+  <!-- タイトル設定 -->
+  <div class="section" id="titleSection">
+    <h3>タイトル設定</h3>
+    <div id="currentTitle" style="margin-bottom:10px;">現在のタイトル: </div>
+    <div class="form-group">
+      <label for="titleInput">新しいタイトル</label>
+      <input type="text" id="titleInput" placeholder="例：抽選会">
+    </div>
+    <button type="button" id="titleSaveBtn">タイトル登録</button>
+    <div class="form-group" style="margin-top:20px;">
+      <label>タイトル表示設定</label>
+      <label><input type="radio" name="titleVisibility" value="true"> 表示</label>
+      <label><input type="radio" name="titleVisibility" value="false"> 非表示</label>
+    </div>
+    <button type="button" id="titleVisibilitySaveBtn">タイトル表示設定更新</button>
+  </div>
+  
+  <hr>
+  
+  <!-- 背景画像設定 -->
+  <div class="section" id="bgSection">
+    <h3>背景画像設定</h3>
+    <div class="form-group">
+      <label for="bgUrlInput">画像URLを入力</label>
+      <input type="text" id="bgUrlInput" placeholder="例：https://example.com/image.jpg">
+    </div>
+    <button type="button" id="bgAddBtn">背景画像登録</button>
+    <div id="bgMessage" style="color:green; margin-top:10px;"></div>
+    <div id="bgList">
+      <!-- 登録済み背景画像のサムネイルとラジオボタン -->
+    </div>
+    <button type="button" id="bgSelectBtn">選択して採用</button>
+  </div>
+  
+  <!-- 中央画像設定 -->
+  <div class="section" id="centerSection">
+    <h3>中央画像設定</h3>
+    <div class="form-group">
+      <label for="centerUrlInput">画像URLを入力</label>
+      <input type="text" id="centerUrlInput" placeholder="例：https://example.com/image.jpg">
+    </div>
+    <button type="button" id="centerAddBtn">中央画像登録</button>
+    <div id="centerMessage" style="color:green; margin-top:10px;"></div>
+    <div id="centerList">
+      <!-- 登録済み中央画像のサムネイルとラジオボタン -->
+    </div>
+    <button type="button" id="centerSelectBtn">選択して採用</button>
+  </div>
+  
+  <!-- 下部ナビゲーション -->
+  <a class="nav-btn" href="index.html">メイン画面に戻る</a>
+  
+  <!-- Firebase SDK と各種処理 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+    import { 
+      getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, deleteDoc 
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyA50uDr4LVMasAode1in9l07O5DABh4DzU",
+      authDomain: "lottery-15223.firebaseapp.com",
+      projectId: "lottery-15223",
+      storageBucket: "lottery-15223.firebasestorage.app",
+      messagingSenderId: "82082482343",
+      appId: "1:82082482343:web:af3a3bbcd6d0740078f382",
+      measurementId: "G-Z9C5H639G1"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Configドキュメント
+    const configDocRef = doc(db, "displaySettings", "config");
+    
+    // グローバル変数：現在採用中の画像URLおよびタイトル表示設定
+    let currentBgImageUrl = "";
+    let currentCenterImageUrl = "";
+    let currentTitleVisible = true;
+    
+    // loadConfig: 現在の設定を読み込み、タイトル、採用中画像、タイトル表示設定を反映
+    async function loadConfig() {
+      const docSnap = await getDoc(configDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("currentTitle").textContent = "現在のタイトル: " + (data.title || "");
+        currentBgImageUrl = data.currentBgImageUrl || "";
+        currentCenterImageUrl = data.currentCenterImageUrl || "";
+        currentTitleVisible = (data.titleVisible === undefined ? true : data.titleVisible);
+        // 自動でタイトル表示ラジオボタンを更新
+        const radios = document.getElementsByName("titleVisibility");
+        radios.forEach(radio => {
+          radio.checked = (radio.value === String(currentTitleVisible));
+        });
+      }
+    }
+    loadConfig();
+    
+    // タイトル登録処理
+    document.getElementById("titleSaveBtn").addEventListener("click", async () => {
+      const title = document.getElementById("titleInput").value.trim();
+      try {
+        await setDoc(configDocRef, { title: title, updatedAt: new Date() }, { merge: true });
+        alert("タイトルが更新されました。");
+        loadConfig();
+      } catch (error) {
+        console.error("タイトル更新エラー:", error);
+        alert("タイトル更新エラー：" + error);
+      }
+    });
+    
+    // タイトル表示設定更新処理
+    document.getElementById("titleVisibilitySaveBtn").addEventListener("click", async () => {
+      const selected = document.querySelector('input[name="titleVisibility"]:checked');
+      if (!selected) {
+        alert("タイトル表示設定を選択してください。");
+        return;
+      }
+      const visible = (selected.value === "true");
+      try {
+        await setDoc(configDocRef, { titleVisible: visible, updatedAt: new Date() }, { merge: true });
+        alert("タイトル表示設定が更新されました。");
+        loadConfig();
+      } catch (error) {
+        console.error("タイトル表示設定更新エラー:", error);
+        alert("タイトル表示設定更新エラー：" + error);
+      }
+    });
+    
+    // 背景画像URL登録処理
+    document.getElementById("bgAddBtn").addEventListener("click", async () => {
+      const url = document.getElementById("bgUrlInput").value.trim();
+      if (!url) {
+        alert("背景画像のURLを入力してください。");
+        return;
+      }
+      try {
+        await addDoc(collection(db, "displayBgImages"), { url: url, createdAt: new Date() });
+        document.getElementById("bgUrlInput").value = "";
+      } catch (error) {
+        console.error("背景画像登録エラー:", error);
+        alert("背景画像登録エラー：" + error);
+      }
+    });
+    
+    // 中央画像URL登録処理
+    document.getElementById("centerAddBtn").addEventListener("click", async () => {
+      const url = document.getElementById("centerUrlInput").value.trim();
+      if (!url) {
+        alert("中央画像のURLを入力してください。");
+        return;
+      }
+      try {
+        await addDoc(collection(db, "displayCenterImages"), { url: url, createdAt: new Date() });
+        document.getElementById("centerUrlInput").value = "";
+      } catch (error) {
+        console.error("中央画像登録エラー:", error);
+        alert("中央画像登録エラー：" + error);
+      }
+    });
+    
+    // 背景画像一覧レンダリング
+    function renderBgList(snapshot) {
+      const bgListDiv = document.getElementById("bgList");
+      bgListDiv.innerHTML = "";
+      snapshot.forEach(docSnapshot => {
+        const data = docSnapshot.data();
+        const docId = docSnapshot.id;
+        const container = document.createElement("div");
+        container.className = "image-option";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "bgSelection";
+        radio.value = docId;
+        if (data.url === currentBgImageUrl) {
+          radio.checked = true;
+        }
+        container.appendChild(radio);
+        const img = document.createElement("img");
+        img.src = data.url;
+        img.className = "thumb";
+        container.appendChild(img);
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "削除";
+        delBtn.className = "delete-btn";
+        delBtn.addEventListener("click", async () => {
+          if (confirm("この背景画像を削除してもよろしいですか？")) {
+            try {
+              await deleteDoc(doc(db, "displayBgImages", docId));
+            } catch (error) {
+              console.error("削除エラー:", error);
+              alert("削除エラー: " + error);
+            }
+          }
+        });
+        container.appendChild(delBtn);
+        bgListDiv.appendChild(container);
+      });
+    }
+    
+    // 中央画像一覧レンダリング
+    function renderCenterList(snapshot) {
+      const centerListDiv = document.getElementById("centerList");
+      centerListDiv.innerHTML = "";
+      snapshot.forEach(docSnapshot => {
+        const data = docSnapshot.data();
+        const docId = docSnapshot.id;
+        const container = document.createElement("div");
+        container.className = "image-option";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "centerSelection";
+        radio.value = docId;
+        if (data.url === currentCenterImageUrl) {
+          radio.checked = true;
+        }
+        container.appendChild(radio);
+        const img = document.createElement("img");
+        img.src = data.url;
+        img.className = "thumb";
+        container.appendChild(img);
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "削除";
+        delBtn.className = "delete-btn";
+        delBtn.addEventListener("click", async () => {
+          if (confirm("この中央画像を削除してもよろしいですか？")) {
+            try {
+              await deleteDoc(doc(db, "displayCenterImages", docId));
+            } catch (error) {
+              console.error("削除エラー:", error);
+              alert("削除エラー: " + error);
+            }
+          }
+        });
+        container.appendChild(delBtn);
+        centerListDiv.appendChild(container);
+      });
+    }
+    
+    onSnapshot(collection(db, "displayBgImages"), (snapshot) => {
+      renderBgList(snapshot);
+    });
+    
+    onSnapshot(collection(db, "displayCenterImages"), (snapshot) => {
+      renderCenterList(snapshot);
+    });
+    
+    // 背景画像採用
+    document.getElementById("bgSelectBtn").addEventListener("click", async () => {
+      const selected = document.querySelector('input[name="bgSelection"]:checked');
+      if (!selected) {
+        alert("採用する背景画像を選択してください。");
+        return;
+      }
+      const selectedDocId = selected.value;
+      const snapshot = await getDoc(doc(db, "displayBgImages", selectedDocId));
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        try {
+          await setDoc(configDocRef, { currentBgImageUrl: data.url, updatedAt: new Date() }, { merge: true });
+          alert("背景画像が更新されました。");
+          loadConfig();
+        } catch (error) {
+          console.error("背景画像設定エラー:", error);
+          alert("背景画像設定エラー: " + error);
+        }
+      }
+    });
+    
+    // 中央画像採用
+    document.getElementById("centerSelectBtn").addEventListener("click", async () => {
+      const selected = document.querySelector('input[name="centerSelection"]:checked');
+      if (!selected) {
+        alert("採用する中央画像を選択してください。");
+        return;
+      }
+      const selectedDocId = selected.value;
+      const snapshot = await getDoc(doc(db, "displayCenterImages", selectedDocId));
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        try {
+          await setDoc(configDocRef, { currentCenterImageUrl: data.url, updatedAt: new Date() }, { merge: true });
+          alert("中央画像が更新されました。");
+          loadConfig();
+        } catch (error) {
+          console.error("中央画像設定エラー:", error);
+          alert("中央画像設定エラー: " + error);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
