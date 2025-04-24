@@ -121,7 +121,32 @@
 <body>
   <div id="pageTitle"></div>
 
-  <div class="center-container" id="centerContainer">
+  <!-- ① ログインオーバーレイ -->
+  <div id="loginOverlay" style="
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); display: flex;
+    align-items: center; justify-content: center; z-index: 9999;
+  ">
+    <div style="
+      background: #fff; padding: 30px; border-radius: 8px;
+      text-align: center; width: 280px;
+    ">
+      <h2 style="margin-bottom: 16px;">抽選画面パスワード</h2>
+      <input
+        type="password"
+        id="eventPasswordInput"
+        placeholder="パスワードを入力"
+        style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"
+      /><br/>
+      <button id="eventLoginBtn" style="
+        padding:10px 20px;font-size:16px;cursor:pointer;
+      ">開く</button>
+    </div>
+  </div>
+  <div id="mainContainer" style="display:none;">
+
+    
+    <div class="center-container" id="centerContainer">
     <img id="centerImage" src="" alt="中央画像" />
     <div id="tilesOverlay" class="prizes-overlay"></div>
     <button id="startBtn" class="start-btn">スタート</button>
@@ -130,6 +155,27 @@
   <div id="resultMessage"></div>
 
   <script type="module">
+    // ★ イベント用パスワード（本番運用では環境変数経由にするのがおすすめ）
+const EVENT_PASSWORD = "3254";
+
+// オーバーレイ要素の取得
+const overlay = document.getElementById("loginOverlay");
+const main   = document.getElementById("mainContainer");
+const btn    = document.getElementById("eventLoginBtn");
+
+// ボタン押下でチェック
+btn.addEventListener("click", () => {
+  const input = document.getElementById("eventPasswordInput").value;
+  if (input === EVENT_PASSWORD) {
+    overlay.style.display = "none";
+    main.style.display    = "block";
+  } else {
+    alert("パスワードが違います");
+  }
+});
+
+// もしリロードしてすでに正しいパスワードを入れていれば…（任意の永続化処理）
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
     import { 
       getFirestore, collection, query, orderBy, onSnapshot,
@@ -334,5 +380,6 @@
       animate();
     });
   </script>
+      </div>
 </body>
 </html>
