@@ -18,11 +18,12 @@
     /* Sections */
     .section { display:none; }
     .section.active { display:block; }
-    /* Common table style */
+    /* Tables */
     table { width:100%; max-width:800px; margin:20px auto; border-collapse:collapse; }
     th, td { border:1px solid #aaa; padding:8px; text-align:center; }
     th { background-color:#f0f0f0; }
     td { background-color:#fff; }
+    /* Input */
     input[type="text"], input[type="number"] { width:100%; box-sizing:border-box; padding:4px; }
     .update-btn { padding:4px 8px; font-size:14px; }
     .correction-input { width:60px; }
@@ -37,25 +38,21 @@
     .start-btn { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:120px; height:80px; border-radius:50%; border:none; background-color:rgba(255,0,0,0.9); color:#fff; font-size:18px; font-weight:bold; cursor:pointer; z-index:10; transition:transform 0.2s; }
     .start-btn:active { transform:translateX(-50%) scale(0.95); }
     #resultMessage { text-align:center; font-size:20px; margin-top:10px; background-color:#fff; color:#000; padding:10px; border-radius:4px; }
-    /* Headings and text containers */
-    h2, h3 {
-      background-color: #fff;
-      color: #000;
-      padding: 4px;
-    }
+    /* Headings */
+    h2, h3 { background-color: #fff; color: #000; padding: 4px; }
     /* Form sections */
     .section form { max-width:600px; margin:0 auto 20px; }
     .section label { display:block; margin:10px 0 5px; }
     .section input, .section select { width:100%; max-width:300px; padding:8px; box-sizing:border-box; }
     .section button { margin-top:10px; padding:8px 16px; }
-    /* Display settings */
+    /* Image options */
     .image-option { display:inline-block; margin:10px; text-align:center; border:1px solid #ccc; padding:5px; border-radius:4px; }
     .thumb { max-width:150px; display:block; margin:5px auto; }
     .delete-btn { margin-top:5px; padding:4px 8px; font-size:12px; background-color:red; color:#fff; border:none; border-radius:4px; cursor:pointer; }
   </style>
 </head>
 <body>
-  <!-- パスワードオーバーレイ -->
+  <!-- Login Overlay -->
   <div id="loginOverlay">
     <div class="modal">
       <h2>アプリパスワード</h2>
@@ -64,10 +61,9 @@
     </div>
   </div>
 
-  <!-- メインコンテナ -->
+  <!-- Main Container -->
   <div id="mainContainer">
-
-    <!-- ナビゲーション -->
+    <!-- Navigation -->
     <div class="nav-buttons">
       <button data-target="lottery">抽選画面</button>
       <button data-target="status">賞情報</button>
@@ -76,18 +72,65 @@
       <button data-target="history">履歴</button>
     </div>
 
-    <!-- 各セクション略同 -->
+    <!-- Status Section -->
+    <section id="status" class="section active">
+      <h2>現在の各賞情報</h2>
+      <table id="prizesTable">
+        <thead><tr><th>賞番号</th><th>賞名称</th><th>出た数</th><th>残数</th><th>修正数</th><th>更新</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="totalRemaining" style="text-align:center;font-weight:bold;">合計残数: 0</div>
+    </section>
+
+    <!-- Lottery Section -->
+    <section id="lottery" class="section">
+      <div id="pageTitle"></div>
+      <div class="center-container">
+        <img id="centerImage" src="" alt="中央画像">
+        <div id="tilesOverlay" class="prizes-overlay"></div>
+        <button id="startBtn" class="start-btn">スタート</button>
+      </div>
+      <div id="resultMessage"></div>
+    </section>
+
+    <!-- Control Section -->
+    <section id="control" class="section">
+      <h2>賞設定</h2>
+      <form id="prizeForm">
+        <label for="prizeName">賞名称</label><input type="text" id="prizeName" required>
+        <label for="prizeQuantity">数量</label><input type="number" id="prizeQuantity" required>
+        <label for="prizeCategory">賞区分</label><select id="prizeCategory" required><option value="">選択</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+        <button type="submit">登録</button>
+      </form>
+      <div id="message"></div>
+      <div id="prizeList"></div>
+      <button id="resetBtn">初期化</button>
+    </section>
+
+    <!-- Display Section -->
+    <section id="display" class="section">
+      <h2>表示設定</h2>
+      <button class="nav-back" data-target="status">戻る</button>
+      <h3>タイトル設定</h3>
+      <div>現在: <span id="currentTitle"></span></div>
+      <input type="text" id="titleInput"><button id="titleSaveBtn">登録</button>
+      <div><label><input type="radio" name="titleVisibility" value="true"> 表示</label><label><input type="radio" name="titleVisibility" value="false"> 非表示</label></div>
+      <button id="titleVisibilitySaveBtn">設定更新</button>
+      <h3>背景画像設定</h3>
+      <input type="text" id="bgUrlInput"><button id="bgAddBtn">登録</button><div id="bgList"></div><button id="bgSelectBtn">採用</button>
+      <h3>中央画
+    </section>
+
+    <!-- History Section -->
+    <section id="history" class="section">
+      <h2>抽選履歴</h2>
+      <table id="historyTable"><thead><tr><th>賞名称</th><th>日付</th><th>時間</th></tr></thead><tbody></tbody></table>
+    </section>
   </div>
 
   <script type="module">
-    // モジュール宣言は先頭に移動
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-    import {
-      getFirestore, collection, query, orderBy, onSnapshot,
-      doc, getDocs, updateDoc, addDoc, deleteDoc, setDoc
-    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
-
-    // パスワード認証
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDocs, updateDoc, addDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
     const EVENT_PASSWORD = "3254";
     const overlay = document.getElementById("loginOverlay");
     const main = document.getElementById("mainContainer");
@@ -97,10 +140,19 @@
         main.style.display = "block";
       } else alert("パスワードが違います");
     });
-
-    // SPAナビゲーション切り替え（略）
-
-    // Firebase初期化と各機能実装（略）
+    // Navigation
+    const navBtns = document.querySelectorAll('.nav-buttons button');
+    navBtns.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
+    document.querySelectorAll('.nav-back').forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
+    function switchSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector('.nav-buttons').style.display = id === 'lottery' ? 'none' : 'block';
+    }
+    // Firebase init
+    const app = initializeApp({ apiKey:"AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0", authDomain:"lottery2-e5aa1.firebaseapp.com", projectId:"lottery2-e5aa1" });
+    const db = getFirestore(app);
+    // Implement other features similarly...
   </script>
 </body>
 </html>
