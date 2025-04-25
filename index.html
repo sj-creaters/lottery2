@@ -3,190 +3,280 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>抽選アプリ SPA</title>
+  <title>メイン画面</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    /* Overlay */
-    #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    #loginOverlay .modal { background: #fff; padding: 30px; border-radius: 8px; text-align: center; width: 300px; }
-    #loginOverlay input { width:100%; padding:8px; font-size:16px; margin-bottom:12px; box-sizing:border-box; }
-    #loginOverlay button { padding:10px 20px; font-size:16px; cursor:pointer; }
-
-    /* Main container */
-    #mainContainer { display:none; padding:20px; }
-    .nav-buttons { text-align: center; margin-bottom:20px; }
-    .nav-buttons button { padding:8px 16px; margin:0 5px; background-color:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-
-    /* Sections */
-    .section { display:none; }
-    .section.active { display:block; }
-
-    /* Common table style */
-    table { width:100%; max-width:800px; margin:20px auto; border-collapse:collapse; }
-    th, td { border:1px solid #aaa; padding:8px; text-align:center; }
-    th { background-color:#f0f0f0; }
-    td { background-color:#fff; }
-
-    /* Input */
-    input[type="text"], input[type="number"] { width:100%; box-sizing:border-box; padding:4px; }
-    .update-btn { padding:4px 8px; font-size:14px; }
-    .correction-input { width:60px; }
-
-    /* Lottery layout */
-    #pageTitle { text-align:center; font-size:28px; margin:20px 0; background-color:transparent; color:#fff; padding:10px; }
-    .center-container { position:relative; margin:0 auto; max-width:600px; text-align:center; overflow:hidden; }
-    #centerImage { width:100%; height:auto; display:block; }
-    .prizes-overlay { position:absolute; top:30%; left:0; right:0; bottom:30%; display:grid; gap:10px; pointer-events:none; padding:10px; grid-template-columns:repeat(3,1fr); justify-items:center; align-items:center; }
-    .tile { width:97%; height:80px; display:flex; align-items:center; justify-content:center; border:2px solid #aaa; font-size:14px; font-family:'Arial Black', Gadget, sans-serif; font-weight:bold; border-radius:8px; background:rgba(255,255,255,0.95); color:#333; box-sizing:border-box; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-    .tile.active { background-color: yellow; border-color: orange; }
-    .winner { background-color: magenta; border-color:red; color:#fff; }
-    .start-btn { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:120px; height:80px; border-radius:50%; border:none; background-color:rgba(255,0,0,0.9); color:#fff; font-size:18px; font-weight:bold; cursor:pointer; z-index:10; transition:transform 0.2s; }
-    .start-btn:active { transform:translateX(-50%) scale(0.95); }
-    #resultMessage { text-align:center; font-size:20px; margin-top:10px; background-color:#fff; color:#000; padding:10px; border-radius:4px; }
-
-    /* Headings */
-    h2, h3 { background-color:#fff; color:#000; padding:4px; }
-
-    /* Form sections */
-    .section form { max-width:600px; margin:0 auto 20px; }
-    .section label { display:block; margin:10px 0 5px; }
-    .section input, .section select { width:100%; max-width:300px; padding:8px; box-sizing:border-box; }
-    .section button { margin-top:10px; padding:8px 16px; }
-
-    /* Display settings */
-    .image-option { display:inline-block; margin:10px; text-align:center; border:1px solid #ccc; padding:5px; border-radius:4px; }
-    .thumb { max-width:150px; display:block; margin:5px auto; }
-    .delete-btn { margin-top:5px; padding:4px 8px; font-size:12px; background-color:red; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .nav-buttons {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .nav-buttons a {
+      display: inline-block;
+      padding: 8px 16px;
+      margin: 5px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .update-btn {
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+    .correction-input {
+      width: 60px;
+    }
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px;
+    }
   </style>
 </head>
 <body>
-  <div id="loginOverlay">
-    <div class="modal">
-      <h2>アプリパスワード</h2>
-      <input type="password" id="eventPasswordInput" placeholder="パスワードを入力">
-      <button id="eventLoginBtn">開く</button>
+  <!-- ① ログインオーバーレイ -->
+  <div id="loginOverlay" style="
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); display: flex;
+    align-items: center; justify-content: center; z-index: 9999;
+  ">
+    <div style="
+      background: #fff; padding: 30px; border-radius: 8px;
+      text-align: center; width: 280px;
+    ">
+      <h2 style="margin-bottom: 16px;">抽選アプリ設定パスワード</h2>
+      <input
+        type="password"
+        id="eventPasswordInput"
+        placeholder="パスワードを入力"
+        style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"
+      /><br/>
+      <button id="eventLoginBtn" style="
+        padding:10px 20px;font-size:16px;cursor:pointer;
+      ">開く</button>
     </div>
   </div>
-
-  <div id="mainContainer">
-    <div class="nav-buttons">
-      <button data-target="lottery">抽選画面</button>
-      <button data-target="status">賞情報</button>
-      <button data-target="control">賞設定</button>
-      <button data-target="display">表示設定</button>
-      <button data-target="history">履歴</button>
-    </div>
-
-    <section id="status" class="section active">
-      <h2>現在の各賞情報</h2>
-      <table id="prizesTable">
-        <thead><tr><th>賞番号</th><th>賞名称</th><th>出た数</th><th>残数</th><th>修正数</th><th>更新</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <div id="totalRemaining">合計残数: 0</div>
-    </section>
-
-    <section id="lottery" class="section">
-      <div id="pageTitle"></div>
-      <div class="center-container">
-        <img id="centerImage" src="" alt="中央画像">
-        <div id="tilesOverlay" class="prizes-overlay"></div>
-        <button id="startBtn" class="start-btn">スタート</button>
-      </div>
-      <div id="resultMessage"></div>
-    </section>
-
-    <section id="control" class="section">
-      <h2>賞設定</h2>
-      <form id="prizeForm">
-        <label>賞名称</label><input type="text" id="prizeName" required>
-        <label>数量</label><input type="number" id="prizeQuantity" required>
-        <label>賞区分</label>
-        <select id="prizeCategory" required><option value="">選択</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
-        <button type="submit">登録</button>
-      </form>
-      <div id="message"></div>
-      <div id="prizeList"></div>
-      <button id="resetBtn">初期化</button>
-    </section>
-
-    <section id="display" class="section">
-      <h2>Display 設定</h2>
-      <button class="nav-back" data-target="status">戻る</button>
-      <h3>タイトル設定</h3>
-      <div>現在のタイトル: <span id="currentTitle"></span></div>
-      <input type="text" id="titleInput"><button id="titleSaveBtn">登録</button>
-      <div><label><input type="radio" name="titleVisibility" value="true"> 表示</label><label><input type="radio" name="titleVisibility" value="false"> 非表示</label></div>
-      <button id="titleVisibilitySaveBtn">設定更新</button>
-      <h3>背景画像設定</h3>
-      <input type="text" id="bgUrlInput"><button id="bgAddBtn">登録</button>
-      <div id="bgList"></div><button id="bgSelectBtn">採用</button>
-      <h3>中央画像設定</h3>
-      <input type="text" id="centerUrlInput"><button id="centerAddBtn">登録</button>
-      <div id="centerList"></div><button id="centerSelectBtn">採用</button>
-    </section>
-
-    <section id="history" class="section">
-      <h2>抽選履歴</h2>
-      <table id="historyTable">
-        <thead><tr><th>賞名称</th><th>日付</th><th>時間</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
+  <!-- ② パスワード認証後に表示する本体 -->
+  <div id="mainContainer" style="display:none;">
+  <!-- 上部ナビゲーション -->
+  <div class="nav-buttons">
+    <a href="lottery.html">抽選画面</a>
+    <a href="control.html">賞設定</a>
+    <a href="display.html">表示設定</a>
+    <a href="history.html">抽選履歴</a>
   </div>
-
+  
+  <h2 style="text-align: center;">現在の各賞情報</h2>
+  
+  <table id="prizesTable">
+    <thead>
+      <tr>
+        <th>賞番号</th>
+        <th>賞名称</th>
+        <th>出た数</th>
+        <th>残数</th>
+        <th>修正数</th>
+        <th>更新</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 賞情報がここに動的に挿入されます -->
+    </tbody>
+  </table>
+  
+  <div class="total" id="totalRemaining">合計残数: 0</div>
+  
+  <!-- 下部ナビゲーション -->
+  <div class="nav-buttons">
+    <a href="lottery.html">抽選画面</a>
+    <a href="control.html">賞設定</a>
+    <a href="display.html">表示設定</a>
+    <a href="history.html">抽選履歴</a>
+  </div>
+  
+  <!-- Firebase SDK と各種処理 -->
   <script type="module">
+// ★ イベント用パスワード（本番運用では環境変数経由にするのがおすすめ）
+const EVENT_PASSWORD = "3254";
+
+// オーバーレイ要素の取得
+const overlay = document.getElementById("loginOverlay");
+const main   = document.getElementById("mainContainer");
+const btn    = document.getElementById("eventLoginBtn");
+
+// ボタン押下でチェック
+btn.addEventListener("click", () => {
+  const input = document.getElementById("eventPasswordInput").value;
+  if (input === EVENT_PASSWORD) {
+    overlay.style.display = "none";
+    main.style.display    = "block";
+  } else {
+    alert("パスワードが違います");
+  }
+});
+
+// もしリロードしてすでに正しいパスワードを入れていれば…（任意の永続化処理）
+
+
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDocs, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
-
-    const EVENT_PASSWORD = "3254";
-    const overlay = document.getElementById("loginOverlay");
-    const main = document.getElementById("mainContainer");
-    document.getElementById("eventLoginBtn").addEventListener("click", () => {
-      if (document.getElementById("eventPasswordInput").value === EVENT_PASSWORD) {
-        overlay.style.display = "none";
-        main.style.display = "block";
-      } else alert("パスワードが違います");
-    });
-
-    const nav = document.querySelector('.nav-buttons');
-    document.querySelectorAll('.nav-buttons button').forEach(btn => btn.addEventListener('click', () => showSection(btn.dataset.target)));
-    document.querySelectorAll('.nav-back').forEach(btn => btn.addEventListener('click', () => showSection(btn.dataset.target)));
-    function showSection(id) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      nav.style.display = id === 'lottery' ? 'none' : 'block';
-    }
-
-    const app = initializeApp({ apiKey: "AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0", authDomain: "lottery2-e5aa1.firebaseapp.com", projectId: "lottery2-e5aa1" });
+    import { 
+      getFirestore, collection, query, orderBy, onSnapshot, 
+      updateDoc, doc 
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+    
+    // Firebase 設定（control.html と同一の設定を利用）
+    const firebaseConfig = {
+  apiKey: "AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0",
+  authDomain: "lottery2-e5aa1.firebaseapp.com",
+  projectId: "lottery2-e5aa1",
+  storageBucket: "lottery2-e5aa1.firebasestorage.app",
+  messagingSenderId: "652760083315",
+  appId: "1:652760083315:web:0a0e45eec343f403f2b306",
+  measurementId: "G-D5H6XV6GHE"
+};
+    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    let prizesData = [], historyData = [];
-    const prizesQuery = query(collection(db, 'prizes'), orderBy('rank', 'asc'));
-    onSnapshot(prizesQuery, snap => { prizesData = []; snap.forEach(d => prizesData.push({ id: d.id, ...d.data() })); updateStatus(); });
-    onSnapshot(collection(db, 'history'), snap => { historyData = []; snap.forEach(d => historyData.push(d.data())); updateStatus(); });
-    function updateStatus() {
-      const tbody = document.querySelector('#prizesTable tbody'); tbody.innerHTML = '';
-      let total = 0;
-      prizesData.forEach(p => {
-        const drawn = historyData.filter(h => h.prizeId === p.id).length;
-        const rem = p.quantity - drawn; total += rem;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${p.rank}</td><td><input type='text' value='${p.name}'></td><td>${drawn}</td><td>${rem}</td><td><input class='correction-input' type='number'></td><td><button class='update-btn'>更新</button></td>`;
-        tbody.appendChild(tr);
-        tr.querySelector('.update-btn').addEventListener('click', async () => {
-          const nameIn = tr.querySelector('input[type=text]').value.trim();
-          const corrVal = tr.querySelector('input[type=number]').value;
-          if (!corrVal) return alert('修正数を入力');
-          const newQty = drawn + Number(corrVal);
-          await updateDoc(doc(db, 'prizes', p.id), { name: nameIn, quantity: newQty });
-          tr.querySelector('input[type=number]').value = '';
-        });
+    
+    // グローバル変数
+    let prizesData = [];
+    let historyData = [];
+    
+    // 賞情報のリアルタイム取得（rank昇順）
+    const prizesQuery = query(collection(db, "prizes"), orderBy("rank", "asc"));
+    onSnapshot(prizesQuery, (snapshot) => {
+      prizesData = [];
+      snapshot.forEach(docSnapshot => {
+        const data = docSnapshot.data();
+        data.id = docSnapshot.id;
+        prizesData.push(data);
       });
-      document.getElementById('totalRemaining').textContent = '合計残数: ' + total;
+      updateTable();
+    });
+    
+    // 履歴情報のリアルタイム取得
+    const historyQuery = collection(db, "history");
+    onSnapshot(historyQuery, (snapshot) => {
+      historyData = [];
+      snapshot.forEach(docSnapshot => {
+        historyData.push(docSnapshot.data());
+      });
+      updateTable();
+    });
+    
+    // テーブル更新関数
+    function updateTable() {
+      const tbody = document.querySelector("#prizesTable tbody");
+      tbody.innerHTML = "";
+      let totalRemaining = 0;
+      
+      prizesData.forEach(prize => {
+        // 出た数を履歴から計算
+        const drawnCount = historyData.filter(item => item.prizeId === prize.id).length;
+        // 残数 = quantity - 出た数
+        const remaining = prize.quantity - drawnCount;
+        totalRemaining += remaining;
+        
+        // 行作成
+        const tr = document.createElement("tr");
+        
+        // 賞番号（rank）
+        const tdRank = document.createElement("td");
+        tdRank.textContent = prize.rank;
+        tr.appendChild(tdRank);
+        
+        // 賞名称：入力フィールドで現状の名称を表示、編集可能
+        const tdName = document.createElement("td");
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = prize.name;
+        nameInput.style.width = "100%";
+        tdName.appendChild(nameInput);
+        tr.appendChild(tdName);
+        
+        // 出た数
+        const tdDrawn = document.createElement("td");
+        tdDrawn.textContent = drawnCount;
+        tr.appendChild(tdDrawn);
+        
+        // 残数
+        const tdRemaining = document.createElement("td");
+        tdRemaining.textContent = remaining;
+        tr.appendChild(tdRemaining);
+        
+        // 修正数：入力フィールド（初期値空白）
+        const tdCorrection = document.createElement("td");
+        const inputCorrection = document.createElement("input");
+        inputCorrection.type = "number";
+        inputCorrection.className = "correction-input";
+        inputCorrection.value = "";
+        inputCorrection.placeholder = "";
+        inputCorrection.min = "0";
+        tdCorrection.appendChild(inputCorrection);
+        tr.appendChild(tdCorrection);
+        
+        // 更新ボタン
+        const tdUpdate = document.createElement("td");
+        const updateBtn = document.createElement("button");
+        updateBtn.textContent = "更新";
+        updateBtn.className = "update-btn";
+        updateBtn.addEventListener("click", async () => {
+          const newName = nameInput.value.trim();
+          const inputVal = inputCorrection.value.trim();
+          if (inputVal === "") {
+            alert("修正数を入力してください。");
+            return;
+          }
+          const newRemaining = Number(inputVal);
+          if (newRemaining < 0) {
+            alert("マイナスの数値は入力できません。");
+            return;
+          }
+          // 新 quantity = 出た数 + 入力された新残数
+          const newQuantity = drawnCount + newRemaining;
+          try {
+            await updateDoc(doc(db, "prizes", prize.id), { 
+              name: newName,
+              quantity: newQuantity
+            });
+            alert(`賞「${newName}」が更新されました。`);
+            inputCorrection.value = "";
+          } catch (error) {
+            console.error("更新エラー:", error);
+            alert("更新に失敗しました。");
+          }
+        });
+        tdUpdate.appendChild(updateBtn);
+        tr.appendChild(tdUpdate);
+        
+        tbody.appendChild(tr);
+      });
+      
+      document.getElementById("totalRemaining").textContent = "合計残数: " + totalRemaining;
     }
-
-    // Lottery logic omitted for brevity
   </script>
+</div>
 </body>
 </html>
