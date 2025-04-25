@@ -22,6 +22,7 @@
     table { width:100%; max-width:800px; margin:20px auto; border-collapse:collapse; }
     th, td { border:1px solid #aaa; padding:8px; text-align:center; }
     th { background-color:#f0f0f0; }
+    td { background-color:#fff; }
     input[type="text"], input[type="number"] { width:100%; box-sizing:border-box; padding:4px; }
     .update-btn { padding:4px 8px; font-size:14px; }
     .correction-input { width:60px; }
@@ -31,7 +32,7 @@
     #centerImage { width:100%; height:auto; display:block; }
     .prizes-overlay { position:absolute; top:30%; left:0; right:0; bottom:30%; display:grid; gap:10px; pointer-events:none; padding:10px; grid-template-columns:repeat(3,1fr); justify-items:center; align-items:center; }
     .tile { width:97%; height:80px; display:flex; align-items:center; justify-content:center; border:2px solid #aaa; font-size:14px; font-family:'Arial Black', Gadget, sans-serif; font-weight:bold; border-radius:8px; background:rgba(255,255,255,0.95); color:#333; box-sizing:border-box; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-    .tile.active { background-color: transparent; border-color: orange; }
+    .tile.active { background-color: yellow; border-color: orange; }
     .winner { background-color: magenta; border-color:red; color:#fff; }
     .start-btn { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:120px; height:80px; border-radius:50%; border:none; background-color:rgba(255,0,0,0.9); color:#fff; font-size:18px; font-weight:bold; cursor:pointer; z-index:10; transition:transform 0.2s; }
     .start-btn:active { transform:translateX(-50%) scale(0.95); }
@@ -72,7 +73,12 @@
     <!-- 賞情報セクション -->
     <section id="status" class="section active">
       <h2 style="text-align:center;">現在の各賞情報</h2>
-      <table id="prizesTable"><thead><tr><th>賞番号</th><th>賞名称</th><th>出た数</th><th>残数</th><th>修正数</th><th>更新</th></tr></thead><tbody></tbody></table>
+      <table id="prizesTable">
+        <thead>
+          <tr><th>賞番号</th><th>賞名称</th><th>出た数</th><th>残数</th><th>修正数</th><th>更新</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
       <div id="totalRemaining" style="text-align:center;font-weight:bold;">合計残数: 0</div>
     </section>
 
@@ -91,9 +97,17 @@
     <section id="control" class="section">
       <h2 style="text-align:center;">賞設定</h2>
       <form id="prizeForm">
-        <label for="prizeName">賞名称</label><input type="text" id="prizeName" required placeholder="例：スターバックス賞">
-        <label for="prizeQuantity">数量</label><input type="number" id="prizeQuantity" required placeholder="例：5">
-        <label for="prizeCategory">賞区分</label><select id="prizeCategory" required><option value="">選択してください</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+        <label for="prizeName">賞名称</label>
+        <input type="text" id="prizeName" required placeholder="例：スターバックス賞">
+        <label for="prizeQuantity">数量</label>
+        <input type="number" id="prizeQuantity" required placeholder="例：5">
+        <label for="prizeCategory">賞区分</label>
+        <select id="prizeCategory" required>
+          <option value="">選択してください</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+        </select>
         <button type="submit">登録</button>
       </form>
       <div id="message" style="text-align:center;color:green;"></div>
@@ -104,27 +118,30 @@
     <!-- 表示設定セクション -->
     <section id="display" class="section">
       <h2 style="text-align:center;">Display 設定</h2>
-      <div style="text-align:center; margin-bottom:10px;"><button class="nav-back" data-target="status">戻る</button></div>
-      <div style="max-width:600px;margin:0 auto;">
+      <div style="text-align:center; margin-bottom:10px;">
+        <button class="nav-back" data-target="status">戻る</button>
+      </div>
+      <div style="max-width:600px;margin:0 auto 30px;">  
         <h3>タイトル設定</h3>
         <div>現在のタイトル: <span id="currentTitle"></span></div>
-        <label>新しいタイトル</label><input type="text" id="titleInput" placeholder="例：抽選会">
+        <label>新しいタイトル</label>
+        <input type="text" id="titleInput" placeholder="例：抽選会">
         <button id="titleSaveBtn">タイトル登録</button>
         <div style="margin-top:20px;"><label><input type="radio" name="titleVisibility" value="true"> 表示</label> <label><input type="radio" name="titleVisibility" value="false"> 非表示</label></div>
         <button id="titleVisibilitySaveBtn">設定更新</button>
       </div>
-      <hr>
-      <div style="max-width:600px;margin:0 auto;">
+      <div style="max-width:600px;margin:0 auto 30px;">
         <h3>背景画像設定</h3>
-        <label>画像URLを入力</label><input type="text" id="bgUrlInput" placeholder="例：https://example.com/image.jpg">
+        <label>画像URLを入力</label>
+        <input type="text" id="bgUrlInput" placeholder="例：https://example.com/image.jpg">
         <button id="bgAddBtn">登録</button>
         <div id="bgList"></div>
         <button id="bgSelectBtn">採用</button>
       </div>
-      <hr>
-      <div style="max-width:600px;margin:0 auto;">
+      <div style="max-width:600px;margin:0 auto 30px;">
         <h3>中央画像設定</h3>
-        <label>画像URLを入力</label><input type="text" id="centerUrlInput" placeholder="例：https://example.com/image.jpg">
+        <label>画像URLを入力</label>
+        <input type="text" id="centerUrlInput" placeholder="例：https://example.com/image.jpg">
         <button id="centerAddBtn">登録</button>
         <div id="centerList"></div>
         <button id="centerSelectBtn">採用</button>
@@ -135,7 +152,10 @@
     <section id="history" class="section">
       <h2 style="text-align:center;">抽選履歴</h2>
       <table id="historyTable" style="margin:0 auto;max-width:600px;">
-        <thead><tr><th>賞名称</th><th>日付</th><th>時間</th></tr></thead><tbody></tbody>
+        <thead>
+          <tr><th>賞名称</th><th>日付</th><th>時間</th></tr>
+        </thead>
+        <tbody></tbody>
       </table>
     </section>
 
