@@ -3,280 +3,277 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>メイン画面</title>
+  <title>抽選アプリ SPA</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    .nav-buttons {
-      text-align: center;
-      margin: 10px 0;
-    }
-    .nav-buttons a {
-      display: inline-block;
-      padding: 8px 16px;
-      margin: 5px;
-      background-color: #007bff;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 4px;
-    }
-    table {
-      width: 100%;
-      max-width: 800px;
-      margin: 20px auto;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    .total {
-      font-weight: bold;
-      margin-top: 20px;
-      text-align: center;
-    }
-    .update-btn {
-      padding: 4px 8px;
-      font-size: 14px;
-    }
-    .correction-input {
-      width: 60px;
-    }
-    input[type="text"] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 4px;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    /* Overlay */
+    #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    #loginOverlay .modal { background: #fff; padding: 30px; border-radius: 8px; text-align: center; width: 300px; }
+    #loginOverlay input { width:100%; padding:8px; font-size:16px; margin-bottom:12px; box-sizing:border-box; }
+    #loginOverlay button { padding:10px 20px; font-size:16px; cursor:pointer; }
+    /* Main container */
+    #mainContainer { display:none; padding:20px; }
+    .nav-buttons { text-align: center; margin-bottom:20px; }
+    .nav-buttons button { padding:8px 16px; margin:0 5px; background-color:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+    /* Sections */
+    .section { display:none; }
+    .section.active { display:block; }
+    /* Common table style */
+    table { width:100%; max-width:800px; margin:20px auto; border-collapse:collapse; }
+    th, td { border:1px solid #aaa; padding:8px; text-align:center; }
+    th { background-color:#f0f0f0; }
+    input[type="text"], input[type="number"] { width:100%; box-sizing:border-box; padding:4px; }
+    .update-btn { padding:4px 8px; font-size:14px; }
+    .correction-input { width:60px; }
+    /* Lottery layout */
+    #pageTitle { text-align:center; font-size:28px; margin:20px 0; background-color:rgba(0,0,0,0.7); color:#fff; padding:10px; }
+    .center-container { position:relative; margin:0 auto; max-width:600px; text-align:center; overflow:hidden; }
+    #centerImage { width:100%; height:auto; display:block; }
+    .prizes-overlay { position:absolute; top:30%; left:0; right:0; bottom:30%; display:grid; gap:10px; pointer-events:none; padding:10px; grid-template-columns:repeat(3,1fr); justify-items:center; align-items:center; }
+    .tile { width:97%; height:80px; display:flex; align-items:center; justify-content:center; border:2px solid #aaa; font-size:14px; font-family:'Arial Black', Gadget, sans-serif; font-weight:bold; border-radius:8px; background:rgba(255,255,255,0.95); color:#333; box-sizing:border-box; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .active { background-color:yellow; border-color:orange; }
+    .winner { background-color:magenta; border-color:red; color:#fff; }
+    .start-btn { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:120px; height:80px; border-radius:50%; border:none; background-color:rgba(255,0,0,0.9); color:#fff; font-size:18px; font-weight:bold; cursor:pointer; z-index:10; }
+    #resultMessage { text-align:center; font-size:20px; margin-top:10px; }
+    /* Form sections */
+    .section form { max-width:600px; margin:0 auto 20px; }
+    .section label { display:block; margin:10px 0 5px; }
+    .section input, .section select { width:100%; max-width:300px; padding:8px; box-sizing:border-box; }
+    .section button { margin-top:10px; padding:8px 16px; }
+    /* Display settings */
+    .section .image-option { display:inline-block; margin:10px; text-align:center; border:1px solid #ccc; padding:5px; border-radius:4px; }
+    .thumb { max-width:150px; display:block; margin:5px auto; }
+    .delete-btn { margin-top:5px; padding:4px 8px; font-size:12px; background-color:red; color:#fff; border:none; border-radius:4px; cursor:pointer; }
   </style>
 </head>
 <body>
   <!-- ① ログインオーバーレイ -->
-  <div id="loginOverlay" style="
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); display: flex;
-    align-items: center; justify-content: center; z-index: 9999;
-  ">
-    <div style="
-      background: #fff; padding: 30px; border-radius: 8px;
-      text-align: center; width: 280px;
-    ">
-      <h2 style="margin-bottom: 16px;">抽選アプリ設定パスワード</h2>
-      <input
-        type="password"
-        id="eventPasswordInput"
-        placeholder="パスワードを入力"
-        style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"
-      /><br/>
-      <button id="eventLoginBtn" style="
-        padding:10px 20px;font-size:16px;cursor:pointer;
-      ">開く</button>
+  <div id="loginOverlay">
+    <div class="modal">
+      <h2>アプリパスワード</h2>
+      <input type="password" id="eventPasswordInput" placeholder="パスワードを入力">
+      <button id="eventLoginBtn">開く</button>
     </div>
   </div>
-  <!-- ② パスワード認証後に表示する本体 -->
-  <div id="mainContainer" style="display:none;">
-  <!-- 上部ナビゲーション -->
-  <div class="nav-buttons">
-    <a href="lottery.html">抽選画面</a>
-    <a href="control.html">賞設定</a>
-    <a href="display.html">表示設定</a>
-    <a href="history.html">抽選履歴</a>
+
+  <!-- ② メインコンテナ -->
+  <div id="mainContainer">
+
+    <!-- ナビゲーション -->
+    <div class="nav-buttons">
+      <button data-target="status">賞情報</button>
+      <button data-target="lottery">抽選画面</button>
+      <button data-target="control">賞設定</button>
+      <button data-target="display">表示設定</button>
+      <button data-target="history">履歴</button>
+    </div>
+
+    <!-- セクション：現在の各賞情報 -->
+    <section id="status" class="section active">
+      <h2 style="text-align:center;">現在の各賞情報</h2>
+      <table id="prizesTable">
+        <thead>
+          <tr><th>賞番号</th><th>賞名称</th><th>出た数</th><th>残数</th><th>修正数</th><th>更新</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="total" id="totalRemaining" style="text-align:center;font-weight:bold;">合計残数: 0</div>
+    </section>
+
+    <!-- セクション：抽選画面 -->
+    <section id="lottery" class="section">
+      <div id="pageTitle"></div>
+      <div class="center-container">
+        <img id="centerImage" src="" alt="中央画像">
+        <div id="tilesOverlay" class="prizes-overlay"></div>
+        <button id="startBtn" class="start-btn">スタート</button>
+      </div>
+      <div id="resultMessage"></div>
+    </section>
+
+    <!-- セクション：賞設定 -->
+    <section id="control" class="section">
+      <h2 style="text-align:center;">賞設定</h2>
+      <form id="prizeForm">
+        <label for="prizeName">賞名称</label>
+        <input type="text" id="prizeName" placeholder="例：スターバックス賞" required>
+        <label for="prizeQuantity">数量</label>
+        <input type="number" id="prizeQuantity" placeholder="例：5" required>
+        <label for="prizeCategory">賞区分</label>
+        <select id="prizeCategory" required>
+          <option value="">選択してください</option>
+          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+        </select>
+        <button type="submit">登録</button>
+      </form>
+      <div id="message" style="text-align:center;color:green;"></div>
+      <div id="prizeList" style="text-align:center;"></div>
+      <div style="text-align:center;"><button id="resetBtn">データ初期化</button></div>
+    </section>
+
+    <!-- セクション：表示設定 -->
+    <section id="display" class="section">
+      <h2 style="text-align:center;">Display 設定</h2>
+      <div style="text-align:center;"><button class="nav-back" data-target="status">戻る</button></div>
+      <!-- タイトル設定 -->
+      <div style="max-width:600px;margin:0 auto;">
+        <h3>タイトル設定</h3>
+        <div>現在のタイトル: <span id="currentTitle"></span></div>
+        <label>新しいタイトル</label>
+        <input type="text" id="titleInput" placeholder="例：抽選会">
+        <button id="titleSaveBtn">タイトル登録</button>
+        <div style="margin-top:20px;"><label><input type="radio" name="titleVisibility" value="true"> 表示</label> <label><input type="radio" name="titleVisibility" value="false"> 非表示</label></div>
+        <button id="titleVisibilitySaveBtn">タイトル表示設定更新</button>
+      </div>
+      <hr>
+      <!-- 背景画像設定 -->
+      <div style="max-width:600px;margin:0 auto;">
+        <h3>背景画像設定</h3>
+        <label>画像URLを入力</label>
+        <input type="text" id="bgUrlInput" placeholder="例：https://example.com/image.jpg">
+        <button id="bgAddBtn">登録</button>
+        <div id="bgList"></div>
+        <button id="bgSelectBtn">採用</button>
+      </div>
+      <hr>
+      <!-- 中央画像設定 -->
+      <div style="max-width:600px;margin:0 auto;">
+        <h3>中央画像設定</h3>
+        <label>画像URLを入力</label>
+        <input type="text" id="centerUrlInput" placeholder="例：https://example.com/image.jpg">
+        <button id="centerAddBtn">登録</button>
+        <div id="centerList"></div>
+        <button id="centerSelectBtn">採用</button>
+      </div>
+    </section>
+
+    <!-- セクション：抽選履歴 -->
+    <section id="history" class="section">
+      <h2 style="text-align:center;">抽選履歴</h2>
+      <table id="historyTable" style="margin:0 auto;max-width:600px;">
+        <thead><tr><th>賞名称</th><th>日付</th><th>時間</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
   </div>
-  
-  <h2 style="text-align: center;">現在の各賞情報</h2>
-  
-  <table id="prizesTable">
-    <thead>
-      <tr>
-        <th>賞番号</th>
-        <th>賞名称</th>
-        <th>出た数</th>
-        <th>残数</th>
-        <th>修正数</th>
-        <th>更新</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- 賞情報がここに動的に挿入されます -->
-    </tbody>
-  </table>
-  
-  <div class="total" id="totalRemaining">合計残数: 0</div>
-  
-  <!-- 下部ナビゲーション -->
-  <div class="nav-buttons">
-    <a href="lottery.html">抽選画面</a>
-    <a href="control.html">賞設定</a>
-    <a href="display.html">表示設定</a>
-    <a href="history.html">抽選履歴</a>
-  </div>
-  
-  <!-- Firebase SDK と各種処理 -->
+
+  <!-- JavaScript -->
   <script type="module">
-// ★ イベント用パスワード（本番運用では環境変数経由にするのがおすすめ）
-const EVENT_PASSWORD = "3254";
-
-// オーバーレイ要素の取得
-const overlay = document.getElementById("loginOverlay");
-const main   = document.getElementById("mainContainer");
-const btn    = document.getElementById("eventLoginBtn");
-
-// ボタン押下でチェック
-btn.addEventListener("click", () => {
-  const input = document.getElementById("eventPasswordInput").value;
-  if (input === EVENT_PASSWORD) {
-    overlay.style.display = "none";
-    main.style.display    = "block";
-  } else {
-    alert("パスワードが違います");
-  }
-});
-
-// もしリロードしてすでに正しいパスワードを入れていれば…（任意の永続化処理）
-
-
-    
+    // Overlay login
+    const EVENT_PASSWORD = "3254";
+    const overlay = document.getElementById("loginOverlay");
+    const main = document.getElementById("mainContainer");
+    document.getElementById("eventLoginBtn").addEventListener("click", ()=>{
+      if(document.getElementById("eventPasswordInput").value===EVENT_PASSWORD){
+        overlay.style.display="none"; main.style.display="block";
+      } else alert("パスワードが違います");
+    });
+    // SPA nav
+    document.querySelectorAll('.nav-buttons button').forEach(btn=>{
+      btn.addEventListener('click',()=> showSection(btn.dataset.target));
+    });
+    document.querySelectorAll('.nav-back').forEach(btn=>{
+      btn.addEventListener('click',()=> showSection(btn.dataset.target));
+    });
+    function showSection(id){
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    // Firebase init & imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-    import { 
-      getFirestore, collection, query, orderBy, onSnapshot, 
-      updateDoc, doc 
+    import {
+      getFirestore, collection, query, orderBy, onSnapshot,
+      doc, getDoc, getDocs, updateDoc, addDoc, deleteDoc, setDoc
     } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
-    
-    // Firebase 設定（control.html と同一の設定を利用）
-    const firebaseConfig = {
-  apiKey: "AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0",
-  authDomain: "lottery2-e5aa1.firebaseapp.com",
-  projectId: "lottery2-e5aa1",
-  storageBucket: "lottery2-e5aa1.firebasestorage.app",
-  messagingSenderId: "652760083315",
-  appId: "1:652760083315:web:0a0e45eec343f403f2b306",
-  measurementId: "G-D5H6XV6GHE"
-};
+    const firebaseConfig = { apiKey:"AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0", authDomain:"lottery2-e5aa1.firebaseapp.com", projectId:"lottery2-e5aa1" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
-    // グローバル変数
-    let prizesData = [];
-    let historyData = [];
-    
-    // 賞情報のリアルタイム取得（rank昇順）
-    const prizesQuery = query(collection(db, "prizes"), orderBy("rank", "asc"));
-    onSnapshot(prizesQuery, (snapshot) => {
-      prizesData = [];
-      snapshot.forEach(docSnapshot => {
-        const data = docSnapshot.data();
-        data.id = docSnapshot.id;
-        prizesData.push(data);
-      });
-      updateTable();
-    });
-    
-    // 履歴情報のリアルタイム取得
-    const historyQuery = collection(db, "history");
-    onSnapshot(historyQuery, (snapshot) => {
-      historyData = [];
-      snapshot.forEach(docSnapshot => {
-        historyData.push(docSnapshot.data());
-      });
-      updateTable();
-    });
-    
-    // テーブル更新関数
-    function updateTable() {
-      const tbody = document.querySelector("#prizesTable tbody");
-      tbody.innerHTML = "";
-      let totalRemaining = 0;
-      
-      prizesData.forEach(prize => {
-        // 出た数を履歴から計算
-        const drawnCount = historyData.filter(item => item.prizeId === prize.id).length;
-        // 残数 = quantity - 出た数
-        const remaining = prize.quantity - drawnCount;
-        totalRemaining += remaining;
-        
-        // 行作成
-        const tr = document.createElement("tr");
-        
-        // 賞番号（rank）
-        const tdRank = document.createElement("td");
-        tdRank.textContent = prize.rank;
-        tr.appendChild(tdRank);
-        
-        // 賞名称：入力フィールドで現状の名称を表示、編集可能
-        const tdName = document.createElement("td");
-        const nameInput = document.createElement("input");
-        nameInput.type = "text";
-        nameInput.value = prize.name;
-        nameInput.style.width = "100%";
-        tdName.appendChild(nameInput);
-        tr.appendChild(tdName);
-        
-        // 出た数
-        const tdDrawn = document.createElement("td");
-        tdDrawn.textContent = drawnCount;
-        tr.appendChild(tdDrawn);
-        
-        // 残数
-        const tdRemaining = document.createElement("td");
-        tdRemaining.textContent = remaining;
-        tr.appendChild(tdRemaining);
-        
-        // 修正数：入力フィールド（初期値空白）
-        const tdCorrection = document.createElement("td");
-        const inputCorrection = document.createElement("input");
-        inputCorrection.type = "number";
-        inputCorrection.className = "correction-input";
-        inputCorrection.value = "";
-        inputCorrection.placeholder = "";
-        inputCorrection.min = "0";
-        tdCorrection.appendChild(inputCorrection);
-        tr.appendChild(tdCorrection);
-        
-        // 更新ボタン
-        const tdUpdate = document.createElement("td");
-        const updateBtn = document.createElement("button");
-        updateBtn.textContent = "更新";
-        updateBtn.className = "update-btn";
-        updateBtn.addEventListener("click", async () => {
-          const newName = nameInput.value.trim();
-          const inputVal = inputCorrection.value.trim();
-          if (inputVal === "") {
-            alert("修正数を入力してください。");
-            return;
-          }
-          const newRemaining = Number(inputVal);
-          if (newRemaining < 0) {
-            alert("マイナスの数値は入力できません。");
-            return;
-          }
-          // 新 quantity = 出た数 + 入力された新残数
-          const newQuantity = drawnCount + newRemaining;
-          try {
-            await updateDoc(doc(db, "prizes", prize.id), { 
-              name: newName,
-              quantity: newQuantity
-            });
-            alert(`賞「${newName}」が更新されました。`);
-            inputCorrection.value = "";
-          } catch (error) {
-            console.error("更新エラー:", error);
-            alert("更新に失敗しました。");
-          }
-        });
-        tdUpdate.appendChild(updateBtn);
-        tr.appendChild(tdUpdate);
-        
+
+    /* ===== 賞情報ステータス更新 ===== */
+    let prizesData=[]; let historyData=[];
+    const prizesQuery = query(collection(db,'prizes'),orderBy('rank','asc'));
+    onSnapshot(prizesQuery,snap=>{ prizesData=[]; snap.forEach(d=>prizesData.push({id:d.id,...d.data()})); updateStatusTable(); });
+    onSnapshot(collection(db,'history'),snap=>{ historyData=[]; snap.forEach(d=>historyData.push(d.data())); updateStatusTable(); });
+    function updateStatusTable(){
+      const tbody = document.querySelector('#prizesTable tbody'); tbody.innerHTML=''; let total=0;
+      prizesData.forEach(prize=>{
+        const drawn = historyData.filter(h=>h.prizeId===prize.id).length;
+        const remaining = prize.quantity - drawn; total+=remaining;
+        const tr = document.createElement('tr');
+        tr.innerHTML=`<td>${prize.rank}</td>
+          <td><input type='text' value='${prize.name}' style='width:100%;'></td>
+          <td>${drawn}</td><td>${remaining}</td>
+          <td><input type='number' class='correction-input'></td>
+          <td><button class='update-btn'>更新</button></td>`;
         tbody.appendChild(tr);
+        const btn = tr.querySelector('.update-btn'), nameIn=tr.querySelector('input[type=text]'), corrIn=tr.querySelector('input[type=number]');
+        btn.addEventListener('click',async()=>{
+          const val = corrIn.value.trim(); if(!val){return alert('修正数を入力してください。');}
+          const num = Number(val); if(num<0) return alert('マイナスは不可');
+          const newQty = drawn + num;
+          try{ await updateDoc(doc(db,'prizes',prize.id),{ name:nameIn.value.trim(), quantity:newQty }); alert('更新完了'); corrIn.value=''; }
+          catch{ alert('更新失敗'); }
+        });
       });
-      
-      document.getElementById("totalRemaining").textContent = "合計残数: " + totalRemaining;
+      document.getElementById('totalRemaining').textContent='合計残数: '+ total;
     }
+
+    /* ===== 抽選画面 ===== */
+    const pageTitle = document.getElementById('pageTitle'); const centerImg=document.getElementById('centerImage'), tilesOverlay=document.getElementById('tilesOverlay');
+    const historyCol = collection(db,'history'); let prizesList=[];
+    onSnapshot(query(collection(db,'prizes'),orderBy('rank','asc')),snap=>{
+      prizesList=[]; tilesOverlay.innerHTML=''; snap.forEach(d=>prizesList.push({id:d.id,...d.data()}));
+      const cols = Math.min(prizesList.length,3); tilesOverlay.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+      prizesList.forEach(p=>{ const div=document.createElement('div'); div.className='tile'; div.textContent=p.name; div.dataset.id=p.id; tilesOverlay.appendChild(div); });
+    });
+    const configRef = doc(db,'displaySettings','config');
+    (async()=>{ const s=await getDoc(configRef); if(s.exists()){ const d=s.data(); if(d.titleVisible!==false && d.title){ pageTitle.textContent=d.title; pageTitle.style.display='block'; } else pageTitle.style.display='none'; if(d.currentBgImageUrl) document.body.style.background=`url('${d.currentBgImageUrl}') repeat`; if(d.currentCenterImageUrl) centerImg.src=d.currentCenterImageUrl; }})();
+    let audioCtx=new (window.AudioContext||window.webkitAudioContext)(); function beep(){ if(audioCtx.state==='suspended') audioCtx.resume(); const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='square'; o.frequency.setValueAtTime(440,audioCtx.currentTime); g.gain.setValueAtTime(0.5,audioCtx.currentTime); o.start(); o.stop(audioCtx.currentTime+0.1); }
+    let running=false, delay=100, decel=20, prev=-1, winner=null, startTime=0, timerId;
+    async function preselect(){ const snap=await getDocs(historyCol); const cnts={}; snap.forEach(d=>{ const id=d.data().prizeId; cnts[id]=(cnts[id]||0)+1; }); let wt=[], tot=0; prizesList.forEach(p=>{ const rem=p.quantity-(cnts[p.id]||0); if(rem>0){ wt.push({p,rem}); tot+=rem;} }); if(tot<=0) return null; let r=Math.random()*tot; for(const w of wt){ r-=w.rem; if(r<=0) return w.p; } }
+    function clearAct(){ document.querySelectorAll('.tile').forEach(t=>t.classList.remove('active','winner')); }
+    function randIdx(max,exc){ if(max<=1) return 0; let i; do{ i=Math.floor(Math.random()*max);}while(i===exc); return i; }
+    async function animate(){ const tiles=document.querySelectorAll('.tile'); if(!tiles.length){ running=false; return;} clearAct(); const idx=randIdx(tiles.length,prev); tiles[idx].classList.add('active'); prev=idx; beep(); if(Date.now()-startTime>=3000) delay+=decel; const maxDelay = (winner&&winner.category==='A')?550:500; if(delay>=maxDelay){ running=false; clearTimeout(timerId); beep(); finish(); return;} timerId=setTimeout(animate,delay);
+    }
+    async function finish(){ const msg=document.getElementById('resultMessage'); if(!winner){ msg.textContent='抽選対象なし'; document.getElementById('startBtn').style.visibility='visible'; return;} const tiles=[...document.querySelectorAll('.tile')]; const idx=tiles.findIndex(t=>t.dataset.id===winner.id); clearAct(); tiles[idx].classList.add('active'); await addDoc(historyCol,{ prizeId:winner.id, prizeName:winner.name, timestamp:new Date() }); let blink=0; const iv=setInterval(()=>{ tiles[idx].classList.toggle('winner'); if(++blink>=15){ clearInterval(iv); tiles[idx].classList.add('winner'); document.getElementById('startBtn').style.visibility='visible'; } beep();},200);
+    }
+    document.getElementById('startBtn').addEventListener('click',async()=>{ clearAct(); winner=await preselect(); if(!winner){ return alert('賞がありません'); } decel=(winner.category==='A')?17:20; document.getElementById('startBtn').style.visibility='hidden'; running=true; delay=100; prev=-1; document.getElementById('resultMessage').textContent=''; startTime=Date.now(); animate(); });
+
+    /* ===== 賞設定コントロール ===== */
+    document.getElementById('prizeForm').addEventListener('submit', async e=>{
+      e.preventDefault(); const name=document.getElementById('prizeName').value.trim(); const qty=Number(document.getElementById('prizeQuantity').value); const cat=document.getElementById('prizeCategory').value;
+      let rank=1; try{ const qr=query(collection(db,'prizes'),orderBy('rank','desc'),{limit:1}); const qs=await getDocs(qr); if(!qs.empty) rank=qs.docs[0].data().rank+1;}catch{};
+      try{ const docRef = await addDoc(collection(db,'prizes'),{ rank, name, quantity:qty, category:cat, createdAt:new Date() }); document.getElementById('message').textContent='登録成功'; } catch(err){ document.getElementById('message').textContent='登録エラー'; }
+    });
+    onSnapshot(query(collection(db,'prizes'),orderBy('rank','asc')), snap=>{
+      let html='<table><tr><th>順位</th><th>名称</th><th>数量</th><th>区分</th></tr>';
+      snap.forEach(d=>{ const d1=d.data(); html+=`<tr><td>${d1.rank}</td><td>${d1.name}</td><td>${d1.quantity}</td><td>${d1.category}</td></tr>`; }); html+='</table>'; document.getElementById('prizeList').innerHTML=html;
+    });
+    document.getElementById('resetBtn').addEventListener('click', async ()=>{
+      if(!confirm('本当に初期化?')) return; try{
+        const ps=await getDocs(collection(db,'prizes')); await Promise.all(ps.docs.map(d=>deleteDoc(doc(db,'prizes',d.id))));
+        const hs=await getDocs(collection(db,'history')); await Promise.all(hs.docs.map(d=>deleteDoc(doc(db,'history',d.id))));
+        document.getElementById('message').textContent='初期化完了';
+      }catch{document.getElementById('message').textContent='初期化エラー';}
+    });
+
+    /* ===== Display 設定 ===== */
+    async function loadConfig(){ const s=await getDoc(configRef); if(s.exists()){ const d=s.data(); document.getElementById('currentTitle').textContent=d.title||''; const vis=d.titleVisible!==false; document.querySelectorAll('input[name="titleVisibility"]').forEach(r=>r.checked=(r.value===String(vis))); }} loadConfig();
+    document.getElementById('titleSaveBtn').addEventListener('click',async()=>{ const t=document.getElementById('titleInput').value.trim(); await setDoc(configRef,{ title:t, updatedAt:new Date() },{ merge:true }); alert('タイトル更新'); loadConfig(); });
+    document.getElementById('titleVisibilitySaveBtn').addEventListener('click',async()=>{ const sel=document.querySelector('input[name="titleVisibility"]:checked'); if(!sel) return alert('選択'); await setDoc(configRef,{ titleVisible: sel.value==='true', updatedAt:new Date() },{ merge:true }); alert('設定更新'); loadConfig(); });
+
+    onSnapshot(collection(db,'displayBgImages'),snap=> renderList(snap,'bgList')); onSnapshot(collection(db,'displayCenterImages'),snap=> renderList(snap,'centerList'));
+    function renderList(snap,domId){ const div=document.getElementById(domId); div.innerHTML=''; snap.forEach(d=>{ const dt=d.data(),id=d.id; const c=document.createElement('div'); c.className='image-option'; c.innerHTML=`<input type='radio' name='${domId}Selection' value='${id}' ${dt.url===''? 'checked':''}><img class='thumb' src='${dt.url}'><button class='delete-btn'>削除</button>`; c.querySelector('.delete-btn').addEventListener('click',async()=>{ if(confirm('削除?')) await deleteDoc(doc(db,domId.replace('List','Images'),id)); }); div.appendChild(c); }); }
+    document.getElementById('bgAddBtn').addEventListener('click',async()=>{ const u=document.getElementById('bgUrlInput').value.trim(); if(!u) return alert('URL'); await addDoc(collection(db,'displayBgImages'),{ url:u, createdAt:new Date() }); });
+    document.getElementById('centerAddBtn').addEventListener('click',async()=>{ const u=document.getElementById('centerUrlInput').value.trim(); if(!u) return alert('URL'); await addDoc(collection(db,'displayCenterImages'),{ url:u, createdAt:new Date() }); });
+    document.getElementById('bgSelectBtn').addEventListener('click',async()=>{ const sel=document.querySelector('input[name="bgListSelection"]:checked'); if(!sel) return alert('選択'); const d=await getDoc(doc(db,'displayBgImages',sel.value)); if(d.exists()) await setDoc(configRef,{ currentBgImageUrl:d.data().url, updatedAt:new Date() },{ merge:true }); alert('背景更新'); });
+    document.getElementById('centerSelectBtn').addEventListener('click',async()=>{ const sel=document.querySelector('input[name="centerListSelection"]:checked'); if(!sel) return alert('選択'); const d=await getDoc(doc(db,'displayCenterImages',sel.value)); if(d.exists()) await setDoc(configRef,{ currentCenterImageUrl:d.data().url, updatedAt:new Date() },{ merge:true }); alert('中央画像更新'); });
+
+    /* ===== 抽選履歴 ===== */
+    onSnapshot(query(collection(db,'history'),orderBy('timestamp','desc')), snap=>{
+      const tb=document.querySelector('#historyTable tbody'); tb.innerHTML=''; snap.forEach(d=>{ const dt=d.data(); const dObj=dt.timestamp.toDate(); const tr=document.createElement('tr'); tr.innerHTML=`<td>${dt.prizeName}</td><td>${dObj.toLocaleDateString()}</td><td>${dObj.toLocaleTimeString()}</td>`; tb.appendChild(tr); });
+    });
   </script>
-</div>
 </body>
 </html>
