@@ -17,18 +17,29 @@
       color: white;
       padding: 10px;
     }
+
+    /* ─── ▼ 修正：コンテナを固定アスペクト比に ─── */
     .center-container {
       position: relative;
-      margin: 20px auto;
+      margin: 0 auto;
       max-width: 600px;
-      text-align: center;
+      width: 100%;
+      /* 縦横比を固定（縦長画像なら 2/3、横長なら 4/3 に変更） */
+      aspect-ratio: 3 / 4;
       overflow: hidden;
+      background: #000;
     }
+
+    /* ▼ 修正：画像をコンテナいっぱいに収める */
     #centerImage {
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;   /* 比率を保ちながらコンテナを埋める */
+      object-position: center;
       display: block;
     }
+
+    /* タイル配置（上40%〜下30% → パーセント指定なので比率固定後は常に安定） */
     .prizes-overlay {
       position: absolute;
       top: 40%;
@@ -75,45 +86,44 @@
       border-color: red;
       color: white;
     }
+
+    /* ─── ▼ 修正：ボタン位置をパーセント指定に ─── */
     .start-btn {
       position: absolute;
-      bottom: 200px;
+      bottom: 25%;          /* 固定px → % に変更 */
       left: 50%;
       transform: translateX(-50%);
-      width: 120px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       border: none;
-      background-color: rgba(0, 0, 0, 0.9);
+      background-color: rgba(0, 0, 0, 0.85);
       color: white;
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
       z-index: 10;
       transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .start-btn:active {
       transform: translateX(-50%) scale(0.95);
     }
+
     #resultMessage {
       text-align: center;
       font-size: 20px;
       margin-top: 10px;
     }
-    @media (max-width: 768px) {
-      .tile {
-        font-size: 14px;
-      }
-    }
+
     @media (max-width: 480px) {
-      .tile {
-        font-size: 12px;
-      }
+      .tile { font-size: 12px; }
       .start-btn {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
         font-size: 14px;
-        bottom: 10px;
       }
     }
   </style>
@@ -121,130 +131,105 @@
 <body>
   <div id="pageTitle"></div>
 
-  <!-- ① ログインオーバーレイ -->
+  <!-- ログインオーバーレイ -->
   <div id="loginOverlay" style="
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.8); display: flex;
     align-items: center; justify-content: center; z-index: 9999;
   ">
-    <div style="
-      background: #fff; padding: 30px; border-radius: 8px;
-      text-align: center; width: 280px;
-    ">
+    <div style="background: #fff; padding: 30px; border-radius: 8px; text-align: center; width: 280px;">
       <h2 style="margin-bottom: 16px;">抽選画面パスワード</h2>
-      <input
-        type="password"
-        id="eventPasswordInput"
-        placeholder="パスワードを入力"
-        style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"
-      /><br/>
-      <button id="eventLoginBtn" style="
-        padding:10px 20px;font-size:16px;cursor:pointer;
-      ">開く</button>
+      <input type="password" id="eventPasswordInput" placeholder="パスワードを入力"
+        style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"/><br/>
+      <button id="eventLoginBtn" style="padding:10px 20px;font-size:16px;cursor:pointer;">開く</button>
     </div>
   </div>
-  <div id="mainContainer" style="display:none;">
 
-    
+  <div id="mainContainer" style="display:none;">
     <div class="center-container" id="centerContainer">
-    <img id="centerImage" src="" alt="中央画像" />
-    <div id="tilesOverlay" class="prizes-overlay"></div>
-    <button id="startBtn" class="start-btn">スタート</button>
+      <img id="centerImage" src="" alt="中央画像" />
+      <div id="tilesOverlay" class="prizes-overlay"></div>
+      <button id="startBtn" class="start-btn">スタート</button>
+    </div>
+    <div id="resultMessage"></div>
   </div>
 
-  <div id="resultMessage"></div>
-
   <script type="module">
-    // ★ イベント用パスワード（本番運用では環境変数経由にするのがおすすめ）
-const EVENT_PASSWORD = "3254";
-
-// オーバーレイ要素の取得
-const overlay = document.getElementById("loginOverlay");
-const main   = document.getElementById("mainContainer");
-const btn    = document.getElementById("eventLoginBtn");
-
-// ボタン押下でチェック
-btn.addEventListener("click", () => {
-  const input = document.getElementById("eventPasswordInput").value;
-  if (input === EVENT_PASSWORD) {
-    overlay.style.display = "none";
-    main.style.display    = "block";
-  } else {
-    alert("パスワードが違います");
-  }
-});
-
-// もしリロードしてすでに正しいパスワードを入れていれば…（任意の永続化処理）
+    const EVENT_PASSWORD = "3254";
+    const overlay = document.getElementById("loginOverlay");
+    const main    = document.getElementById("mainContainer");
+    document.getElementById("eventLoginBtn").addEventListener("click", () => {
+      const input = document.getElementById("eventPasswordInput").value;
+      if (input === EVENT_PASSWORD) {
+        overlay.style.display = "none";
+        main.style.display    = "block";
+      } else {
+        alert("パスワードが違います");
+      }
+    });
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-    import { 
+    import {
       getFirestore, collection, query, orderBy, onSnapshot,
-      doc, getDoc, getDocs, addDoc 
+      doc, getDoc, getDocs, addDoc
     } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0",
-  authDomain: "lottery2-e5aa1.firebaseapp.com",
-  projectId: "lottery2-e5aa1",
-  storageBucket: "lottery2-e5aa1.firebasestorage.app",
-  messagingSenderId: "652760083315",
-  appId: "1:652760083315:web:0a0e45eec343f403f2b306",
-  measurementId: "G-D5H6XV6GHE"
-};
+      apiKey: "AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0",
+      authDomain: "lottery2-e5aa1.firebaseapp.com",
+      projectId: "lottery2-e5aa1",
+      storageBucket: "lottery2-e5aa1.firebasestorage.app",
+      messagingSenderId: "652760083315",
+      appId: "1:652760083315:web:0a0e45eec343f403f2b306",
+      measurementId: "G-D5H6XV6GHE"
+    };
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db  = getFirestore(app);
 
-    const configDocRef = doc(db, "displaySettings", "config");
+    // 表示設定読み込み
     async function loadDisplayConfig() {
-      const docSnap = await getDoc(configDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      const snap = await getDoc(doc(db, "displaySettings", "config"));
+      if (snap.exists()) {
+        const d = snap.data();
         const titleElem = document.getElementById("pageTitle");
-        if (data.titleVisible !== false && data.title) {
-          titleElem.textContent = data.title;
+        if (d.titleVisible !== false && d.title) {
+          titleElem.textContent = d.title;
           titleElem.style.display = "block";
         } else {
           titleElem.style.display = "none";
         }
-        const bgUrl = data.currentBgImageUrl || "";
-        if (bgUrl) {
-          document.body.style.backgroundImage = `url('${bgUrl}')`;
+        if (d.currentBgImageUrl) {
+          document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
           document.body.style.backgroundRepeat = "repeat";
         }
-        const centerUrl = data.currentCenterImageUrl || "";
-        document.getElementById("centerImage").src = centerUrl;
+        document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
       }
     }
     loadDisplayConfig();
 
+    // 賞タイル
     const tilesOverlay = document.getElementById("tilesOverlay");
     let prizesList = [];
-    const prizesQuery = query(collection(db, "prizes"), orderBy("rank", "asc"));
-    onSnapshot(prizesQuery, (snapshot) => {
+    onSnapshot(query(collection(db, "prizes"), orderBy("rank", "asc")), snapshot => {
       prizesList = [];
       tilesOverlay.innerHTML = "";
-      snapshot.forEach(docSnap => {
-        const prize = { id: docSnap.id, ...docSnap.data() };
-        prizesList.push(prize);
-      });
-      const colCount = Math.min(prizesList.length, 3);
-      tilesOverlay.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
+      snapshot.forEach(s => prizesList.push({ id: s.id, ...s.data() }));
+      const cols = Math.min(prizesList.length, 3);
+      tilesOverlay.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
       prizesList.forEach(prize => {
         const tile = document.createElement("div");
         tile.className = "tile";
         tile.textContent = prize.name;
         tile.dataset.id = prize.id;
         tilesOverlay.appendChild(tile);
-        setTimeout(() => {
-          tile.style.textAlign = tile.scrollWidth > tile.clientWidth ? "left" : "center";
-        }, 0);
       });
     });
 
-    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // ビープ音
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function beep() {
       if (audioCtx.state === "suspended") audioCtx.resume();
-      const osc = audioCtx.createOscillator();
+      const osc  = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -255,70 +240,50 @@ btn.addEventListener("click", () => {
       osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    let running = false;
-    let currentDelay = 100;
-    let deceleration = 20;
-    let timerId;
-    let prevIndex = -1;
-    let preselectedWinner = null;
-    let startTime = 0;
+    let running = false, currentDelay = 100, deceleration = 20;
+    let timerId, prevIndex = -1, preselectedWinner = null, startTime = 0;
 
     async function preselectWinner() {
-      const historySnapshot = await getDocs(collection(db, "history"));
+      const histSnap = await getDocs(collection(db, "history"));
       const counts = {};
-      historySnapshot.forEach(docSnap => {
-        const id = docSnap.data().prizeId;
+      histSnap.forEach(s => {
+        const id = s.data().prizeId;
         counts[id] = (counts[id] || 0) + 1;
       });
       const weighted = [];
       let total = 0;
       prizesList.forEach(prize => {
         const remaining = prize.quantity - (counts[prize.id] || 0);
-        if (remaining > 0) {
-          weighted.push({ prize, weight: remaining });
-          total += remaining;
-        }
+        if (remaining > 0) { weighted.push({ prize, weight: remaining }); total += remaining; }
       });
-      if (total <= 0) {
-        preselectedWinner = null;
-        return;
-      }
+      if (total <= 0) { preselectedWinner = null; return; }
       let r = Math.random() * total;
       for (const item of weighted) {
         r -= item.weight;
-        if (r <= 0) {
-          preselectedWinner = item.prize;
-          break;
-        }
+        if (r <= 0) { preselectedWinner = item.prize; break; }
       }
     }
 
     function clearActive() {
       document.querySelectorAll(".tile").forEach(t => t.classList.remove("active", "winner"));
     }
-
-    function getRandomIndex(max, exclude) {
+    function randIdx(max, excl) {
       if (max <= 1) return 0;
       let idx;
-      do {
-        idx = Math.floor(Math.random() * max);
-      } while (idx === exclude);
+      do { idx = Math.floor(Math.random() * max); } while (idx === excl);
       return idx;
     }
 
     function animate() {
       const tiles = document.querySelectorAll(".tile");
-      if (tiles.length === 0) {
-        running = false;
-        return;
-      }
+      if (!tiles.length) { running = false; return; }
       clearActive();
-      const idx = getRandomIndex(tiles.length, prevIndex);
+      const idx = randIdx(tiles.length, prevIndex);
       tiles[idx].classList.add("active");
       prevIndex = idx;
       beep();
       if (Date.now() - startTime >= 3000) currentDelay += deceleration;
-      const maxD = preselectedWinner && preselectedWinner.category === "A" ? 550 : 500;
+      const maxD = preselectedWinner?.category === "A" ? 550 : 500;
       if (currentDelay >= maxD) {
         running = false;
         clearTimeout(timerId);
@@ -329,19 +294,10 @@ btn.addEventListener("click", () => {
       timerId = setTimeout(animate, currentDelay);
     }
 
-    async function recordWinner(winner) {
-      await addDoc(collection(db, "history"), {
-        prizeId: winner.id,
-        prizeName: winner.name,
-        rank: winner.rank,
-        timestamp: new Date()
-      }).catch(error => console.error(error));
-    }
-
     async function finishAnimation() {
-      const msgElem = document.getElementById("resultMessage");
+      const msg = document.getElementById("resultMessage");
       if (!preselectedWinner) {
-        msgElem.textContent = "抽選結果：当たる賞はありません。";
+        msg.textContent = "抽選結果：当たる賞はありません。";
         document.getElementById("startBtn").style.visibility = "visible";
         return;
       }
@@ -350,7 +306,12 @@ btn.addEventListener("click", () => {
       if (winIdx < 0) return;
       clearActive();
       tiles[winIdx].classList.add("active");
-      await recordWinner(preselectedWinner);
+      await addDoc(collection(db, "history"), {
+        prizeId: preselectedWinner.id,
+        prizeName: preselectedWinner.name,
+        rank: preselectedWinner.rank,
+        timestamp: new Date()
+      }).catch(console.error);
       let blink = 0;
       const interval = setInterval(() => {
         tiles[winIdx].classList.toggle("winner");
@@ -366,10 +327,7 @@ btn.addEventListener("click", () => {
     document.getElementById("startBtn").addEventListener("click", async () => {
       clearActive();
       await preselectWinner();
-      if (!preselectedWinner) {
-        alert("抽選対象となる賞がありません。");
-        return;
-      }
+      if (!preselectedWinner) { alert("抽選対象となる賞がありません。"); return; }
       deceleration = preselectedWinner.category === "A" ? 17 : 20;
       document.getElementById("startBtn").style.visibility = "hidden";
       running = true;
@@ -380,6 +338,5 @@ btn.addEventListener("click", () => {
       animate();
     });
   </script>
-      </div>
 </body>
 </html>
