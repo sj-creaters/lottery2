@@ -26,7 +26,6 @@
       grid-template-columns: repeat(3, 1fr);
       justify-items: center; align-items: center;
     }
-    /* ▼ タイル色はCSS変数で制御 */
     .tile {
       width: 97%; height: 40px;
       display: flex; align-items: center; justify-content: center;
@@ -41,25 +40,30 @@
       transition: background-color 0.15s;
     }
     .active {
-      background-color: var(--active-bg, yellow) !important;
-      border-color: var(--active-border, orange) !important;
-      color: var(--active-color, #333) !important;
+      background-color: var(--active-bg,    yellow)  !important;
+      border-color:     var(--active-border, orange)  !important;
+      color:            var(--active-color,  #333)    !important;
     }
     .winner {
-      background-color: var(--winner-bg, magenta) !important;
-      border-color: var(--winner-border, red) !important;
-      color: var(--winner-color, white) !important;
+      background-color: var(--winner-bg,    magenta) !important;
+      border-color:     var(--winner-border, red)     !important;
+      color:            var(--winner-color,  white)   !important;
     }
+    /* ▼ ボタンもCSS変数で制御 */
     .start-btn {
       position: absolute; left: 50%;
       transform: translateX(-50%);
       width: 100px; height: 100px; border-radius: 50%;
-      border: none; background-color: rgba(0,0,0,0.85);
-      color: white; font-size: 18px; font-weight: bold;
+      background: var(--btn-bg, rgba(0,0,0,0.85));
+      color: var(--btn-color, white);
+      border: var(--btn-border, none);
+      box-shadow: var(--btn-shadow, 0 3px 10px rgba(0,0,0,0.5));
+      font-size: 18px; font-weight: bold;
       cursor: pointer; z-index: 10;
       display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
-    .start-btn:active { transform: translateX(-50%) scale(0.95); }
+    .start-btn:active { transform: translateX(-50%) scale(0.93); }
     #resultMessage { text-align: center; font-size: 20px; margin-top: 10px; }
     @media (max-width: 480px) {
       .tile { font-size: 12px; }
@@ -92,16 +96,63 @@
   </div>
 
   <script type="module">
-    // ── カラープリセット（display.html と共通定義）──────────────
+    // ── カラープリセット（タイル＋ボタン）────────────────────────
     const PRESETS = [
-      { id:'classic',  label:'クラシック', bg:'rgba(255,255,255,0.95)', color:'#222', border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'magenta',             wBorder:'red',     wColor:'white' },
-      { id:'dark',     label:'ダーク',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',    aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'#FF1493',             wBorder:'red',     wColor:'white' },
-      { id:'gold',     label:'ゴールド',   bg:'#FFD700',                color:'#333',  border:'#B8860B', aBg:'#FF8C00', aBorder:'#FF4500', aColor:'white', wBg:'#DC143C',             wBorder:'#8B0000', wColor:'white' },
-      { id:'navy',     label:'ネイビー',   bg:'#1a237e',                color:'white', border:'#3949ab', aBg:'#00E5FF', aBorder:'#00ACC1', aColor:'#111',  wBg:'#FFD700',             wBorder:'#FFA000', wColor:'#222' },
-      { id:'frost',    label:'半透明白',   bg:'rgba(255,255,255,0.72)', color:'#111',  border:'rgba(255,255,255,0.5)', aBg:'rgba(255,230,0,0.92)', aBorder:'orange', aColor:'#222', wBg:'rgba(255,0,180,0.92)', wBorder:'red', wColor:'white' },
-      { id:'frostd',   label:'半透明黒',   bg:'rgba(0,0,0,0.65)',       color:'white', border:'rgba(0,0,0,0.4)',       aBg:'rgba(255,220,0,0.92)', aBorder:'orange', aColor:'#222', wBg:'rgba(255,20,147,0.92)',wBorder:'red', wColor:'white' },
-      { id:'red',      label:'レッド',     bg:'#c62828',                color:'white', border:'#b71c1c', aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'white',               wBorder:'#c62828', wColor:'#c62828' },
-      { id:'emerald',  label:'エメラルド', bg:'#00695c',                color:'white', border:'#004d40', aBg:'#FFEB3B', aBorder:'#F9A825', aColor:'#222',  wBg:'#FF6F00',             wBorder:'#E65100', wColor:'white' },
+      { id:'classic', label:'クラシック',
+        bg:'rgba(255,255,255,0.95)', color:'#222',  border:'#aaa',
+        aBg:'#FFD700', aBorder:'orange',   aColor:'#222',
+        wBg:'magenta', wBorder:'red',      wColor:'white',
+        btnBg:'rgba(0,0,0,0.85)',           btnColor:'white',
+        btnBorder:'none',                  btnShadow:'0 3px 10px rgba(0,0,0,0.5)' },
+
+      { id:'dark', label:'ダーク',
+        bg:'rgba(0,0,0,0.82)',  color:'white', border:'#555',
+        aBg:'#FFD700', aBorder:'orange',   aColor:'#222',
+        wBg:'#FF1493', wBorder:'red',      wColor:'white',
+        btnBg:'#111',                       btnColor:'white',
+        btnBorder:'2px solid #555',        btnShadow:'0 0 12px rgba(255,255,255,0.15)' },
+
+      { id:'gold', label:'ゴールド',
+        bg:'#FFD700',  color:'#333',  border:'#B8860B',
+        aBg:'#FF8C00', aBorder:'#FF4500', aColor:'white',
+        wBg:'#DC143C', wBorder:'#8B0000', wColor:'white',
+        btnBg:'linear-gradient(135deg,#FFD700,#FFA000)', btnColor:'#333',
+        btnBorder:'3px solid #B8860B',     btnShadow:'0 3px 12px rgba(180,120,0,0.6)' },
+
+      { id:'navy', label:'ネイビー',
+        bg:'#1a237e',  color:'white', border:'#3949ab',
+        aBg:'#00E5FF', aBorder:'#00ACC1', aColor:'#111',
+        wBg:'#FFD700', wBorder:'#FFA000', wColor:'#222',
+        btnBg:'#0d1b6e',                   btnColor:'white',
+        btnBorder:'2px solid #5c6bc0',    btnShadow:'0 3px 12px rgba(0,0,80,0.5)' },
+
+      { id:'frost', label:'半透明白',
+        bg:'rgba(255,255,255,0.72)', color:'#111', border:'rgba(255,255,255,0.5)',
+        aBg:'rgba(255,230,0,0.92)',  aBorder:'orange',   aColor:'#222',
+        wBg:'rgba(255,0,180,0.92)', wBorder:'red',       wColor:'white',
+        btnBg:'rgba(255,255,255,0.88)',     btnColor:'#111',
+        btnBorder:'2px solid rgba(0,0,0,0.25)', btnShadow:'0 3px 10px rgba(0,0,0,0.2)' },
+
+      { id:'frostd', label:'半透明黒',
+        bg:'rgba(0,0,0,0.65)',      color:'white', border:'rgba(0,0,0,0.4)',
+        aBg:'rgba(255,220,0,0.92)', aBorder:'orange',   aColor:'#222',
+        wBg:'rgba(255,20,147,0.92)',wBorder:'red',       wColor:'white',
+        btnBg:'rgba(0,0,0,0.72)',           btnColor:'white',
+        btnBorder:'2px solid rgba(255,255,255,0.3)', btnShadow:'0 3px 10px rgba(0,0,0,0.5)' },
+
+      { id:'red', label:'レッド',
+        bg:'#c62828',  color:'white', border:'#b71c1c',
+        aBg:'#FFD700', aBorder:'orange',   aColor:'#222',
+        wBg:'white',   wBorder:'#c62828', wColor:'#c62828',
+        btnBg:'#b71c1c',                   btnColor:'white',
+        btnBorder:'3px solid #7f0000',    btnShadow:'0 3px 12px rgba(180,0,0,0.6)' },
+
+      { id:'emerald', label:'エメラルド',
+        bg:'#00695c',  color:'white', border:'#004d40',
+        aBg:'#FFEB3B', aBorder:'#F9A825', aColor:'#222',
+        wBg:'#FF6F00', wBorder:'#E65100', wColor:'white',
+        btnBg:'#004d40',                   btnColor:'white',
+        btnBorder:'2px solid #00897b',    btnShadow:'0 3px 12px rgba(0,80,60,0.5)' },
     ];
 
     function applyPreset(id) {
@@ -116,6 +167,10 @@
       r.setProperty('--winner-bg',    p.wBg);
       r.setProperty('--winner-border',p.wBorder);
       r.setProperty('--winner-color', p.wColor);
+      r.setProperty('--btn-bg',       p.btnBg);
+      r.setProperty('--btn-color',    p.btnColor);
+      r.setProperty('--btn-border',   p.btnBorder);
+      r.setProperty('--btn-shadow',   p.btnShadow);
     }
 
     // ── パスワード認証 ────────────────────────────────────────────
@@ -145,34 +200,24 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // ── 表示設定読み込み（位置・カラー含む）──────────────────────
+    // ── 表示設定読み込み ──────────────────────────────────────────
     async function loadDisplayConfig() {
       const snap = await getDoc(doc(db, "displaySettings", "config"));
       if (!snap.exists()) return;
       const d = snap.data();
-
-      // タイトル
       const titleElem = document.getElementById("pageTitle");
       if (d.titleVisible !== false && d.title) {
         titleElem.textContent = d.title; titleElem.style.display = "block";
       } else { titleElem.style.display = "none"; }
-
-      // 背景・中央画像
       if (d.currentBgImageUrl) {
         document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
         document.body.style.backgroundRepeat = "repeat";
       }
       document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
-
-      // ▼ タイル位置
-      const overlay = document.getElementById("tilesOverlay");
-      overlay.style.top    = (d.tileTop    ?? 40) + "%";
-      overlay.style.bottom = (d.tileBottom ?? 30) + "%";
-
-      // ▼ ボタン位置
+      const ov = document.getElementById("tilesOverlay");
+      ov.style.top    = (d.tileTop    ?? 40) + "%";
+      ov.style.bottom = (d.tileBottom ?? 30) + "%";
       document.getElementById("startBtn").style.bottom = (d.btnBottom ?? 25) + "%";
-
-      // ▼ カラープリセット
       applyPreset(d.colorPreset || "classic");
     }
     loadDisplayConfig();
@@ -184,12 +229,10 @@
       prizesList = [];
       tilesOverlay.innerHTML = "";
       snapshot.forEach(s => prizesList.push({ id: s.id, ...s.data() }));
-      tilesOverlay.style.gridTemplateColumns = `repeat(${Math.min(prizesList.length, 3)}, 1fr)`;
+      tilesOverlay.style.gridTemplateColumns = `repeat(${Math.min(prizesList.length,3)}, 1fr)`;
       prizesList.forEach(prize => {
         const tile = document.createElement("div");
-        tile.className = "tile";
-        tile.textContent = prize.name;
-        tile.dataset.id = prize.id;
+        tile.className = "tile"; tile.textContent = prize.name; tile.dataset.id = prize.id;
         tilesOverlay.appendChild(tile);
       });
     });
