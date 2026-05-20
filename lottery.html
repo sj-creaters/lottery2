@@ -5,140 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽選アニメーション</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
+    body { margin: 0; padding: 0; }
     #pageTitle {
-      text-align: center;
-      font-size: 28px;
-      margin: 20px 0;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px;
+      text-align: center; font-size: 28px; margin: 20px 0;
+      background-color: rgba(0,0,0,0.7); color: white; padding: 10px;
     }
-
-    /* ─── ▼ 修正：コンテナを固定アスペクト比に ─── */
     .center-container {
-      position: relative;
-      margin: 0 auto;
-      max-width: 600px;
-      width: 100%;
-      /* 縦横比を固定（縦長画像なら 2/3、横長なら 4/3 に変更） */
-      aspect-ratio: 3 / 4;
-      overflow: hidden;
-      background: #000;
+      position: relative; margin: 0 auto;
+      max-width: 600px; width: 100%;
+      aspect-ratio: 3 / 4; overflow: hidden; background: #000;
     }
-
-    /* ▼ 修正：画像をコンテナいっぱいに収める */
     #centerImage {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;   /* 比率を保ちながらコンテナを埋める */
-      object-position: center;
-      display: block;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center; display: block;
     }
-
-    /* タイル配置（上40%〜下30% → パーセント指定なので比率固定後は常に安定） */
     .prizes-overlay {
-      position: absolute;
-      top: 40%;
-      left: 0;
-      right: 0;
-      bottom: 30%;
-      display: grid;
-      gap: 10px;
-      pointer-events: none;
-      padding: 10px;
-      box-sizing: border-box;
+      position: absolute; left: 0; right: 0;
+      display: grid; gap: 10px; pointer-events: none;
+      padding: 10px; box-sizing: border-box;
       grid-template-columns: repeat(3, 1fr);
-      justify-items: center;
-      align-items: center;
-      justify-content: center;
+      justify-items: center; align-items: center;
     }
+    /* ▼ タイル色はCSS変数で制御 */
     .tile {
-      width: 97%;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 97%; height: 40px;
+      display: flex; align-items: center; justify-content: center;
       padding: 0 10px;
-      border: 2px solid #aaa;
-      font-size: 14px;
-      font-family: 'Arial Black', Gadget, sans-serif;
-      font-weight: bold;
-      border-radius: 8px;
-      transition: background-color 0.2s;
-      background-color: rgba(255, 255, 255, 0.95);
-      color: #333;
-      box-sizing: border-box;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      text-align: center;
+      border: 2px solid var(--tile-border, #aaa);
+      font-size: 14px; font-family: 'Arial Black', Gadget, sans-serif;
+      font-weight: bold; border-radius: 8px;
+      background-color: var(--tile-bg, rgba(255,255,255,0.95));
+      color: var(--tile-color, #333);
+      box-sizing: border-box; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis; text-align: center;
+      transition: background-color 0.15s;
     }
     .active {
-      background-color: yellow;
-      border-color: orange;
+      background-color: var(--active-bg, yellow) !important;
+      border-color: var(--active-border, orange) !important;
+      color: var(--active-color, #333) !important;
     }
     .winner {
-      background-color: magenta;
-      border-color: red;
-      color: white;
+      background-color: var(--winner-bg, magenta) !important;
+      border-color: var(--winner-border, red) !important;
+      color: var(--winner-color, white) !important;
     }
-
-    /* ─── ▼ 修正：ボタン位置をパーセント指定に ─── */
     .start-btn {
-      position: absolute;
-      bottom: 25%;          /* 固定px → % に変更 */
-      left: 50%;
+      position: absolute; left: 50%;
       transform: translateX(-50%);
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      border: none;
-      background-color: rgba(0, 0, 0, 0.85);
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      z-index: 10;
-      transition: transform 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100px; height: 100px; border-radius: 50%;
+      border: none; background-color: rgba(0,0,0,0.85);
+      color: white; font-size: 18px; font-weight: bold;
+      cursor: pointer; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
     }
-    .start-btn:active {
-      transform: translateX(-50%) scale(0.95);
-    }
-
-    #resultMessage {
-      text-align: center;
-      font-size: 20px;
-      margin-top: 10px;
-    }
-
+    .start-btn:active { transform: translateX(-50%) scale(0.95); }
+    #resultMessage { text-align: center; font-size: 20px; margin-top: 10px; }
     @media (max-width: 480px) {
       .tile { font-size: 12px; }
-      .start-btn {
-        width: 70px;
-        height: 70px;
-        font-size: 14px;
-      }
+      .start-btn { width: 70px; height: 70px; font-size: 14px; }
     }
   </style>
 </head>
 <body>
   <div id="pageTitle"></div>
 
-  <!-- ログインオーバーレイ -->
   <div id="loginOverlay" style="
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); display: flex;
-    align-items: center; justify-content: center; z-index: 9999;
-  ">
-    <div style="background: #fff; padding: 30px; border-radius: 8px; text-align: center; width: 280px;">
-      <h2 style="margin-bottom: 16px;">抽選画面パスワード</h2>
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.8);display:flex;
+    align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:#fff;padding:30px;border-radius:8px;text-align:center;width:280px;">
+      <h2 style="margin-bottom:16px;">抽選画面パスワード</h2>
       <input type="password" id="eventPasswordInput" placeholder="パスワードを入力"
         style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"/><br/>
       <button id="eventLoginBtn" style="padding:10px 20px;font-size:16px;cursor:pointer;">開く</button>
@@ -146,7 +83,7 @@
   </div>
 
   <div id="mainContainer" style="display:none;">
-    <div class="center-container" id="centerContainer">
+    <div class="center-container">
       <img id="centerImage" src="" alt="中央画像" />
       <div id="tilesOverlay" class="prizes-overlay"></div>
       <button id="startBtn" class="start-btn">スタート</button>
@@ -155,17 +92,39 @@
   </div>
 
   <script type="module">
+    // ── カラープリセット（display.html と共通定義）──────────────
+    const PRESETS = [
+      { id:'classic',  label:'クラシック', bg:'rgba(255,255,255,0.95)', color:'#222', border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'magenta',             wBorder:'red',     wColor:'white' },
+      { id:'dark',     label:'ダーク',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',    aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'#FF1493',             wBorder:'red',     wColor:'white' },
+      { id:'gold',     label:'ゴールド',   bg:'#FFD700',                color:'#333',  border:'#B8860B', aBg:'#FF8C00', aBorder:'#FF4500', aColor:'white', wBg:'#DC143C',             wBorder:'#8B0000', wColor:'white' },
+      { id:'navy',     label:'ネイビー',   bg:'#1a237e',                color:'white', border:'#3949ab', aBg:'#00E5FF', aBorder:'#00ACC1', aColor:'#111',  wBg:'#FFD700',             wBorder:'#FFA000', wColor:'#222' },
+      { id:'frost',    label:'半透明白',   bg:'rgba(255,255,255,0.72)', color:'#111',  border:'rgba(255,255,255,0.5)', aBg:'rgba(255,230,0,0.92)', aBorder:'orange', aColor:'#222', wBg:'rgba(255,0,180,0.92)', wBorder:'red', wColor:'white' },
+      { id:'frostd',   label:'半透明黒',   bg:'rgba(0,0,0,0.65)',       color:'white', border:'rgba(0,0,0,0.4)',       aBg:'rgba(255,220,0,0.92)', aBorder:'orange', aColor:'#222', wBg:'rgba(255,20,147,0.92)',wBorder:'red', wColor:'white' },
+      { id:'red',      label:'レッド',     bg:'#c62828',                color:'white', border:'#b71c1c', aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'white',               wBorder:'#c62828', wColor:'#c62828' },
+      { id:'emerald',  label:'エメラルド', bg:'#00695c',                color:'white', border:'#004d40', aBg:'#FFEB3B', aBorder:'#F9A825', aColor:'#222',  wBg:'#FF6F00',             wBorder:'#E65100', wColor:'white' },
+    ];
+
+    function applyPreset(id) {
+      const p = PRESETS.find(x => x.id === id) || PRESETS[0];
+      const r = document.documentElement.style;
+      r.setProperty('--tile-bg',      p.bg);
+      r.setProperty('--tile-color',   p.color);
+      r.setProperty('--tile-border',  p.border);
+      r.setProperty('--active-bg',    p.aBg);
+      r.setProperty('--active-border',p.aBorder);
+      r.setProperty('--active-color', p.aColor);
+      r.setProperty('--winner-bg',    p.wBg);
+      r.setProperty('--winner-border',p.wBorder);
+      r.setProperty('--winner-color', p.wColor);
+    }
+
+    // ── パスワード認証 ────────────────────────────────────────────
     const EVENT_PASSWORD = "3254";
-    const overlay = document.getElementById("loginOverlay");
-    const main    = document.getElementById("mainContainer");
     document.getElementById("eventLoginBtn").addEventListener("click", () => {
-      const input = document.getElementById("eventPasswordInput").value;
-      if (input === EVENT_PASSWORD) {
-        overlay.style.display = "none";
-        main.style.display    = "block";
-      } else {
-        alert("パスワードが違います");
-      }
+      if (document.getElementById("eventPasswordInput").value === EVENT_PASSWORD) {
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("mainContainer").style.display = "block";
+      } else { alert("パスワードが違います"); }
     });
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
@@ -186,36 +145,46 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // 表示設定読み込み
+    // ── 表示設定読み込み（位置・カラー含む）──────────────────────
     async function loadDisplayConfig() {
       const snap = await getDoc(doc(db, "displaySettings", "config"));
-      if (snap.exists()) {
-        const d = snap.data();
-        const titleElem = document.getElementById("pageTitle");
-        if (d.titleVisible !== false && d.title) {
-          titleElem.textContent = d.title;
-          titleElem.style.display = "block";
-        } else {
-          titleElem.style.display = "none";
-        }
-        if (d.currentBgImageUrl) {
-          document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
-          document.body.style.backgroundRepeat = "repeat";
-        }
-        document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
+      if (!snap.exists()) return;
+      const d = snap.data();
+
+      // タイトル
+      const titleElem = document.getElementById("pageTitle");
+      if (d.titleVisible !== false && d.title) {
+        titleElem.textContent = d.title; titleElem.style.display = "block";
+      } else { titleElem.style.display = "none"; }
+
+      // 背景・中央画像
+      if (d.currentBgImageUrl) {
+        document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
+        document.body.style.backgroundRepeat = "repeat";
       }
+      document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
+
+      // ▼ タイル位置
+      const overlay = document.getElementById("tilesOverlay");
+      overlay.style.top    = (d.tileTop    ?? 40) + "%";
+      overlay.style.bottom = (d.tileBottom ?? 30) + "%";
+
+      // ▼ ボタン位置
+      document.getElementById("startBtn").style.bottom = (d.btnBottom ?? 25) + "%";
+
+      // ▼ カラープリセット
+      applyPreset(d.colorPreset || "classic");
     }
     loadDisplayConfig();
 
-    // 賞タイル
+    // ── 賞タイル ─────────────────────────────────────────────────
     const tilesOverlay = document.getElementById("tilesOverlay");
     let prizesList = [];
     onSnapshot(query(collection(db, "prizes"), orderBy("rank", "asc")), snapshot => {
       prizesList = [];
       tilesOverlay.innerHTML = "";
       snapshot.forEach(s => prizesList.push({ id: s.id, ...s.data() }));
-      const cols = Math.min(prizesList.length, 3);
-      tilesOverlay.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      tilesOverlay.style.gridTemplateColumns = `repeat(${Math.min(prizesList.length, 3)}, 1fr)`;
       prizesList.forEach(prize => {
         const tile = document.createElement("div");
         tile.className = "tile";
@@ -225,71 +194,48 @@
       });
     });
 
-    // ビープ音
+    // ── ビープ音 ─────────────────────────────────────────────────
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function beep() {
       if (audioCtx.state === "suspended") audioCtx.resume();
-      const osc  = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
       osc.type = "square";
       osc.frequency.setValueAtTime(440, audioCtx.currentTime);
       gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    let running = false, currentDelay = 100, deceleration = 20;
-    let timerId, prevIndex = -1, preselectedWinner = null, startTime = 0;
+    // ── 抽選ロジック ──────────────────────────────────────────────
+    let currentDelay = 100, deceleration = 20, timerId;
+    let prevIndex = -1, preselectedWinner = null, startTime = 0;
 
     async function preselectWinner() {
       const histSnap = await getDocs(collection(db, "history"));
       const counts = {};
-      histSnap.forEach(s => {
-        const id = s.data().prizeId;
-        counts[id] = (counts[id] || 0) + 1;
-      });
-      const weighted = [];
-      let total = 0;
+      histSnap.forEach(s => { const id = s.data().prizeId; counts[id] = (counts[id]||0)+1; });
+      const weighted = []; let total = 0;
       prizesList.forEach(prize => {
-        const remaining = prize.quantity - (counts[prize.id] || 0);
-        if (remaining > 0) { weighted.push({ prize, weight: remaining }); total += remaining; }
+        const rem = prize.quantity - (counts[prize.id]||0);
+        if (rem > 0) { weighted.push({ prize, weight: rem }); total += rem; }
       });
       if (total <= 0) { preselectedWinner = null; return; }
       let r = Math.random() * total;
-      for (const item of weighted) {
-        r -= item.weight;
-        if (r <= 0) { preselectedWinner = item.prize; break; }
-      }
+      for (const item of weighted) { r -= item.weight; if (r <= 0) { preselectedWinner = item.prize; break; } }
     }
 
-    function clearActive() {
-      document.querySelectorAll(".tile").forEach(t => t.classList.remove("active", "winner"));
-    }
-    function randIdx(max, excl) {
-      if (max <= 1) return 0;
-      let idx;
-      do { idx = Math.floor(Math.random() * max); } while (idx === excl);
-      return idx;
-    }
+    function clearActive() { document.querySelectorAll(".tile").forEach(t => t.classList.remove("active","winner")); }
+    function randIdx(max, excl) { let i; do { i = Math.floor(Math.random()*max); } while (i===excl); return i; }
 
     function animate() {
       const tiles = document.querySelectorAll(".tile");
-      if (!tiles.length) { running = false; return; }
+      if (!tiles.length) return;
       clearActive();
       const idx = randIdx(tiles.length, prevIndex);
-      tiles[idx].classList.add("active");
-      prevIndex = idx;
-      beep();
+      tiles[idx].classList.add("active"); prevIndex = idx; beep();
       if (Date.now() - startTime >= 3000) currentDelay += deceleration;
-      const maxD = preselectedWinner?.category === "A" ? 550 : 500;
-      if (currentDelay >= maxD) {
-        running = false;
-        clearTimeout(timerId);
-        beep();
-        finishAnimation();
-        return;
+      if (currentDelay >= (preselectedWinner?.category === "A" ? 550 : 500)) {
+        clearTimeout(timerId); beep(); finishAnimation(); return;
       }
       timerId = setTimeout(animate, currentDelay);
     }
@@ -298,26 +244,21 @@
       const msg = document.getElementById("resultMessage");
       if (!preselectedWinner) {
         msg.textContent = "抽選結果：当たる賞はありません。";
-        document.getElementById("startBtn").style.visibility = "visible";
-        return;
+        document.getElementById("startBtn").style.visibility = "visible"; return;
       }
       const tiles = Array.from(document.querySelectorAll(".tile"));
       const winIdx = tiles.findIndex(t => t.dataset.id === preselectedWinner.id);
       if (winIdx < 0) return;
-      clearActive();
-      tiles[winIdx].classList.add("active");
+      clearActive(); tiles[winIdx].classList.add("active");
       await addDoc(collection(db, "history"), {
-        prizeId: preselectedWinner.id,
-        prizeName: preselectedWinner.name,
-        rank: preselectedWinner.rank,
-        timestamp: new Date()
+        prizeId: preselectedWinner.id, prizeName: preselectedWinner.name,
+        rank: preselectedWinner.rank, timestamp: new Date()
       }).catch(console.error);
       let blink = 0;
-      const interval = setInterval(() => {
+      const iv = setInterval(() => {
         tiles[winIdx].classList.toggle("winner");
         if (++blink >= 15) {
-          clearInterval(interval);
-          tiles[winIdx].classList.add("winner");
+          clearInterval(iv); tiles[winIdx].classList.add("winner");
           document.getElementById("startBtn").style.visibility = "visible";
         }
         beep();
@@ -325,17 +266,13 @@
     }
 
     document.getElementById("startBtn").addEventListener("click", async () => {
-      clearActive();
-      await preselectWinner();
+      clearActive(); await preselectWinner();
       if (!preselectedWinner) { alert("抽選対象となる賞がありません。"); return; }
       deceleration = preselectedWinner.category === "A" ? 17 : 20;
       document.getElementById("startBtn").style.visibility = "hidden";
-      running = true;
-      currentDelay = 100;
-      prevIndex = -1;
+      currentDelay = 100; prevIndex = -1;
       document.getElementById("resultMessage").textContent = "";
-      startTime = Date.now();
-      animate();
+      startTime = Date.now(); animate();
     });
   </script>
 </body>
