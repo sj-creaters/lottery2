@@ -30,8 +30,6 @@
     .upload-msg { font-size: 13px; margin-top: 6px; }
     .divider { display: flex; align-items: center; gap: 10px; margin: 12px 0; color: #888; font-size: 13px; }
     .divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid #ccc; }
-
-    /* 抽選画面設定 */
     .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
     .slider-row label { width: 120px; margin: 0; flex-shrink: 0; font-size: 14px; }
     .slider-row input[type="range"] { flex: 1; max-width: 260px; }
@@ -83,7 +81,7 @@
         <div style="flex:1; min-width:280px;">
           <div class="form-group">
             <strong>タイル表示エリア位置</strong>
-            <div style="font-size:12px;color:#888;margin-bottom:8px;">※ スライダーを動かすと右のプレビューに即反映されます</div>
+            <div style="font-size:12px;color:#888;margin-bottom:8px;">※ スライダーを動かすと右のプレビューに即反映</div>
             <div class="slider-row">
               <label>タイル 上端</label>
               <input type="range" id="slTileTop" min="10" max="65" step="1" value="40">
@@ -112,28 +110,20 @@
           <strong style="display:block;margin-bottom:8px;font-size:14px;">📱 プレビュー</strong>
           <div id="preview" style="
             position:relative; width:200px; aspect-ratio:3/4;
-            background:#333; border-radius:8px; overflow:hidden;
-            border:2px solid #aaa;">
-            <!-- 背景画像 -->
+            background:#333; border-radius:8px; overflow:hidden; border:2px solid #aaa;">
             <img id="previewBg" src="" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;top:0;left:0;">
-            <!-- タイルオーバーレイ -->
             <div id="previewTiles" style="
               position:absolute; left:0; right:0;
               display:grid; gap:4px; padding:4px; box-sizing:border-box;
               grid-template-columns:repeat(3,1fr);
               align-items:center; justify-items:center;"></div>
-            <!-- スタートボタン -->
             <div id="previewBtn" style="
               position:absolute; left:50%; transform:translateX(-50%);
               width:40px; height:40px; border-radius:50%;
               display:flex; align-items:center; justify-content:center;
-              font-size:9px; font-weight:bold; cursor:default;">
-              スタート
-            </div>
+              font-size:8px; font-weight:bold;">スタート</div>
           </div>
-          <div style="font-size:11px;color:#888;margin-top:6px;text-align:center;">
-            実際の画面と同じ比率
-          </div>
+          <div style="font-size:11px;color:#888;margin-top:6px;text-align:center;">実際の画面と同じ比率</div>
         </div>
 
       </div>
@@ -175,7 +165,7 @@
       </div>
       <div class="divider">または URL で登録</div>
       <div class="form-group">
-        <label for="bgUrlInput">画像URLを入力</label>
+        <label>画像URLを入力</label>
         <input type="text" id="bgUrlInput" placeholder="例：https://example.com/image.jpg">
       </div>
       <button type="button" id="bgAddBtn">背景画像登録</button>
@@ -195,7 +185,7 @@
       </div>
       <div class="divider">または URL で登録</div>
       <div class="form-group">
-        <label for="centerUrlInput">画像URLを入力</label>
+        <label>画像URLを入力</label>
         <input type="text" id="centerUrlInput" placeholder="例：https://example.com/image.jpg">
       </div>
       <button type="button" id="centerAddBtn">中央画像登録</button>
@@ -213,7 +203,7 @@
       from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
     import {
       getFirestore, doc, setDoc, getDoc, collection,
-      onSnapshot, addDoc, deleteDoc
+      onSnapshot, addDoc, deleteDoc, query, orderBy, getDocs
     } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
     import {
       getStorage, ref as sRef, uploadBytesResumable, getDownloadURL
@@ -236,6 +226,20 @@
     const configRef = doc(db, "displaySettings", "config");
     const STAFF_EMAIL = "mi3254@sendai-mitsukoshi.co.jp";
 
+    // ── カラープリセット ──────────────────────────────────────────
+    const PRESETS = [
+      { id:'classic',  label:'クラシック', bg:'rgba(255,255,255,0.95)', color:'#222',  border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   wBg:'magenta', wBorder:'red',     wColor:'white',   btnBg:'rgba(0,0,0,0.85)',  btnColor:'white', btnBorder:'none' },
+      { id:'dark',     label:'ダーク',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',     aBg:'#FFD700', aBorder:'orange',   wBg:'#FF1493', wBorder:'red',     wColor:'white',   btnBg:'#111',              btnColor:'white', btnBorder:'2px solid #555' },
+      { id:'gold',     label:'ゴールド',   bg:'#FFD700',                color:'#333',  border:'#B8860B',  aBg:'#FF8C00', aBorder:'#FF4500', wBg:'#DC143C', wBorder:'#8B0000', wColor:'white',   btnBg:'#FFD700',           btnColor:'#333',  btnBorder:'3px solid #B8860B' },
+      { id:'navy',     label:'ネイビー',   bg:'#1a237e',                color:'white', border:'#3949ab',  aBg:'#00E5FF', aBorder:'#00ACC1', wBg:'#FFD700', wBorder:'#FFA000', wColor:'#222',    btnBg:'#0d1b6e',           btnColor:'white', btnBorder:'2px solid #5c6bc0' },
+      { id:'frost',    label:'半透明白',   bg:'rgba(255,255,255,0.72)', color:'#111',  border:'rgba(255,255,255,0.5)', aBg:'rgba(255,230,0,0.92)', aBorder:'orange', wBg:'rgba(255,0,180,0.92)', wBorder:'red', wColor:'white', btnBg:'rgba(255,255,255,0.88)', btnColor:'#111', btnBorder:'2px solid rgba(0,0,0,0.25)' },
+      { id:'frostd',   label:'半透明黒',   bg:'rgba(0,0,0,0.65)',       color:'white', border:'rgba(0,0,0,0.4)',       aBg:'rgba(255,220,0,0.92)', aBorder:'orange', wBg:'rgba(255,20,147,0.92)', wBorder:'red', wColor:'white', btnBg:'rgba(0,0,0,0.72)', btnColor:'white', btnBorder:'2px solid rgba(255,255,255,0.3)' },
+      { id:'red',      label:'レッド',     bg:'#c62828',                color:'white', border:'#b71c1c',  aBg:'#FFD700', aBorder:'orange',   wBg:'white',   wBorder:'#c62828', wColor:'#c62828', btnBg:'#b71c1c',           btnColor:'white', btnBorder:'3px solid #7f0000' },
+      { id:'emerald',  label:'エメラルド', bg:'#00695c',                color:'white', border:'#004d40',  aBg:'#FFEB3B', aBorder:'#F9A825', wBg:'#FF6F00', wBorder:'#E65100', wColor:'white',   btnBg:'#004d40',           btnColor:'white', btnBorder:'2px solid #00897b' },
+    ];
+
+    let selectedPresetId = 'classic';
+
     // ── 認証 ─────────────────────────────────────────────────────
     onAuthStateChanged(auth, user => {
       if (user) {
@@ -253,20 +257,24 @@
       } catch(e) { err.textContent = "パスワードが違います"; }
     });
 
-    // ── カラープリセット ──────────────────────────────────────────
-    const PRESETS = [
-      { id:'classic',  label:'クラシック', bg:'rgba(255,255,255,0.95)', color:'#222',  border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   wBg:'magenta', wBorder:'red',     wColor:'white',   btnBg:'rgba(0,0,0,0.85)',  btnColor:'white', btnBorder:'none' },
-      { id:'dark',     label:'ダーク',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',     aBg:'#FFD700', aBorder:'orange',   wBg:'#FF1493', wBorder:'red',     wColor:'white',   btnBg:'#111',              btnColor:'white', btnBorder:'2px solid #555' },
-      { id:'gold',     label:'ゴールド',   bg:'#FFD700',                color:'#333',  border:'#B8860B',  aBg:'#FF8C00', aBorder:'#FF4500', wBg:'#DC143C', wBorder:'#8B0000', wColor:'white',   btnBg:'#FFD700',           btnColor:'#333',  btnBorder:'3px solid #B8860B' },
-      { id:'navy',     label:'ネイビー',   bg:'#1a237e',                color:'white', border:'#3949ab',  aBg:'#00E5FF', aBorder:'#00ACC1', wBg:'#FFD700', wBorder:'#FFA000', wColor:'#222',    btnBg:'#0d1b6e',           btnColor:'white', btnBorder:'2px solid #5c6bc0' },
-      { id:'frost',    label:'半透明白',   bg:'rgba(255,255,255,0.72)', color:'#111',  border:'rgba(255,255,255,0.5)', aBg:'rgba(255,230,0,0.92)', aBorder:'orange', wBg:'rgba(255,0,180,0.92)', wBorder:'red', wColor:'white', btnBg:'rgba(255,255,255,0.88)', btnColor:'#111', btnBorder:'2px solid rgba(0,0,0,0.25)' },
-      { id:'frostd',   label:'半透明黒',   bg:'rgba(0,0,0,0.65)',       color:'white', border:'rgba(0,0,0,0.4)',       aBg:'rgba(255,220,0,0.92)', aBorder:'orange', wBg:'rgba(255,20,147,0.92)', wBorder:'red', wColor:'white', btnBg:'rgba(0,0,0,0.72)', btnColor:'white', btnBorder:'2px solid rgba(255,255,255,0.3)' },
-      { id:'red',      label:'レッド',     bg:'#c62828',                color:'white', border:'#b71c1c',  aBg:'#FFD700', aBorder:'orange',   wBg:'white',   wBorder:'#c62828', wColor:'#c62828', btnBg:'#b71c1c',           btnColor:'white', btnBorder:'3px solid #7f0000' },
-      { id:'emerald',  label:'エメラルド', bg:'#00695c',                color:'white', border:'#004d40',  aBg:'#FFEB3B', aBorder:'#F9A825', wBg:'#FF6F00', wBorder:'#E65100', wColor:'white',   btnBg:'#004d40',           btnColor:'white', btnBorder:'2px solid #00897b' },
-    ];
+    // ── ページ初期化 ──────────────────────────────────────────────
+    async function initPage() {
+      buildPresetGrid();
+      setupSliders();
+      await loadConfig();
+      setupImageLists();
+    }
 
-    let selectedPresetId = 'classic';
+    // ── スライダー設定 ────────────────────────────────────────────
+    function setupSliders() {
+      ["TileTop","TileBottom","BtnBottom"].forEach(k => {
+        const sl = document.getElementById("sl"+k);
+        const val = document.getElementById("val"+k);
+        sl.addEventListener("input", () => { val.textContent = sl.value; updatePreview(); });
+      });
+    }
 
+    // ── プリセットグリッド構築 ────────────────────────────────────
     function buildPresetGrid() {
       const grid = document.getElementById("presetGrid");
       PRESETS.forEach(p => {
@@ -274,9 +282,9 @@
         card.className = "preset-card"; card.dataset.id = p.id;
         const row = document.createElement("div"); row.className = "sample-row";
         [
-          { bg: p.bg,  color: p.color,  border: p.border,  text:'賞' },
-          { bg: p.aBg, color: '#333',   border: p.aBorder, text:'▶'  },
-          { bg: p.wBg, color: p.wColor, border: p.wBorder, text:'★'  },
+          { bg:p.bg,  color:p.color,  border:p.border,  text:'賞' },
+          { bg:p.aBg, color:'#333',   border:p.aBorder, text:'▶'  },
+          { bg:p.wBg, color:p.wColor, border:p.wBorder, text:'★'  },
         ].forEach(s => {
           const t = document.createElement("div"); t.className = "sample-tile";
           t.style.background = s.bg; t.style.color = s.color; t.style.borderColor = s.border;
@@ -284,31 +292,17 @@
         });
         const btn = document.createElement("div"); btn.className = "sample-btn";
         btn.style.background = p.btnBg; btn.style.color = p.btnColor;
-        btn.style.border = p.btnBorder || 'none'; btn.textContent = "GO";
+        btn.style.border = p.btnBorder || "none"; btn.textContent = "GO";
         row.appendChild(btn); card.appendChild(row);
-        const lbl = document.createElement("div"); lbl.className = "preset-label"; lbl.textContent = p.label;
-        card.appendChild(lbl);
+        const lbl = document.createElement("div"); lbl.className = "preset-label";
+        lbl.textContent = p.label; card.appendChild(lbl);
         card.addEventListener("click", () => {
           document.querySelectorAll(".preset-card").forEach(c => c.classList.remove("selected"));
           card.classList.add("selected"); selectedPresetId = p.id;
-          updatePreview(); // ▼ プリセット変更時もプレビュー更新
+          updatePreview();
         });
         grid.appendChild(card);
       });
-    }
-
-    // ── ページ初期化（ログイン後に呼ばれる）─────────────────────
-    function initPage() {
-      buildPresetGrid();
-
-      // スライダー値表示 ＋ プレビュー即時更新
-      ["TileTop","TileBottom","BtnBottom"].forEach(k => {
-        const sl = document.getElementById("sl"+k), val = document.getElementById("val"+k);
-        sl.addEventListener("input", () => { val.textContent = sl.value; updatePreview(); });
-      });
-
-      loadConfig();
-      setupImageLists();
     }
 
     // ── プレビュー更新 ────────────────────────────────────────────
@@ -317,20 +311,14 @@
       const bottom = Number(document.getElementById("slTileBottom").value);
       const btn    = Number(document.getElementById("slBtnBottom").value);
       const p      = PRESETS.find(x => x.id === selectedPresetId) || PRESETS[0];
-
-      // タイルエリア
-      const tiles = document.getElementById("previewTiles");
+      const tiles  = document.getElementById("previewTiles");
       tiles.style.top    = top + "%";
       tiles.style.bottom = bottom + "%";
-
-      // タイル色
       Array.from(tiles.children).forEach(t => {
-        t.style.background   = p.bg;
-        t.style.color        = p.color;
-        t.style.borderColor  = p.border;
+        t.style.background  = p.bg;
+        t.style.color       = p.color;
+        t.style.borderColor = p.border;
       });
-
-      // ボタン位置・色
       const previewBtn = document.getElementById("previewBtn");
       previewBtn.style.bottom     = btn + "%";
       previewBtn.style.background = p.btnBg;
@@ -338,15 +326,13 @@
       previewBtn.style.border     = p.btnBorder || "none";
     }
 
-    // プレビュー用ダミータイル生成
     function buildPreviewTiles(names) {
       const tiles = document.getElementById("previewTiles");
       tiles.innerHTML = "";
-      const cols = Math.min(names.length, 3);
-      tiles.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      tiles.style.gridTemplateColumns = `repeat(${Math.min(names.length,3)}, 1fr)`;
       names.forEach(name => {
         const t = document.createElement("div");
-        t.style.cssText = "width:97%;height:14px;border-radius:3px;border:1px solid #aaa;font-size:7px;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;";
+        t.style.cssText = "width:97%;height:14px;border-radius:3px;border:1px solid #aaa;font-size:7px;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;box-sizing:border-box;";
         t.textContent = name;
         tiles.appendChild(t);
       });
@@ -356,41 +342,53 @@
     // ── 設定読み込み ──────────────────────────────────────────────
     async function loadConfig() {
       const snap = await getDoc(configRef);
-      if (!snap.exists()) return;
-      const d = snap.data();
-      document.getElementById("currentTitle").textContent = "現在のタイトル: " + (d.title || "");
-      document.getElementsByName("titleVisibility").forEach(r => { r.checked = (r.value === String(d.titleVisible ?? true)); });
-      if (d.tileTop    != null) { document.getElementById("slTileTop").value    = d.tileTop;    document.getElementById("valTileTop").textContent    = d.tileTop; }
-      if (d.tileBottom != null) { document.getElementById("slTileBottom").value = d.tileBottom; document.getElementById("valTileBottom").textContent = d.tileBottom; }
-      if (d.btnBottom  != null) { document.getElementById("slBtnBottom").value  = d.btnBottom;  document.getElementById("valBtnBottom").textContent  = d.btnBottom; }
-      // 賞名をFirestoreから取得してプレビュータイルに反映
-      const { getDocs, query: q2, orderBy: ob } = await import("https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js").catch(()=>({}));
+      if (snap.exists()) {
+        const d = snap.data();
+        document.getElementById("currentTitle").textContent = "現在のタイトル: " + (d.title || "");
+        document.getElementsByName("titleVisibility").forEach(r => {
+          r.checked = (r.value === String(d.titleVisible ?? true));
+        });
+        if (d.tileTop    != null) { document.getElementById("slTileTop").value    = d.tileTop;    document.getElementById("valTileTop").textContent    = d.tileTop; }
+        if (d.tileBottom != null) { document.getElementById("slTileBottom").value = d.tileBottom; document.getElementById("valTileBottom").textContent = d.tileBottom; }
+        if (d.btnBottom  != null) { document.getElementById("slBtnBottom").value  = d.btnBottom;  document.getElementById("valBtnBottom").textContent  = d.btnBottom; }
+        if (d.colorPreset) {
+          selectedPresetId = d.colorPreset;
+          document.querySelectorAll(".preset-card").forEach(c => c.classList.toggle("selected", c.dataset.id === d.colorPreset));
+        } else {
+          document.querySelector(".preset-card")?.classList.add("selected");
+        }
+        if (d.currentCenterImageUrl) {
+          document.getElementById("previewBg").src = d.currentCenterImageUrl;
+        }
+      }
+      // 賞名をプレビューに表示
       try {
-        const snap = await getDocs(query(collection(db,"prizes"), orderBy("rank","asc")));
-        const names = snap.docs.map(d => d.data().name).slice(0, 6);
+        const prizesSnap = await getDocs(query(collection(db,"prizes"), orderBy("rank","asc")));
+        const names = prizesSnap.docs.map(d => d.data().name).slice(0,6);
         buildPreviewTiles(names.length ? names : ["1等","2等","3等","4等","5等"]);
       } catch(e) {
         buildPreviewTiles(["1等","2等","3等","4等","5等"]);
       }
-
-      // 背景画像をプレビューに反映
-      if (d.currentCenterImageUrl) {
-        document.getElementById("previewBg").src = d.currentCenterImageUrl;
-      }
+    }
 
     // ── レイアウト保存 ────────────────────────────────────────────
     document.getElementById("layoutSaveBtn").addEventListener("click", async () => {
       const msg = document.getElementById("layoutSaveMsg");
       try {
         await setDoc(configRef, {
-          tileTop: Number(document.getElementById("slTileTop").value),
-          tileBottom: Number(document.getElementById("slTileBottom").value),
-          btnBottom: Number(document.getElementById("slBtnBottom").value),
-          colorPreset: selectedPresetId, updatedAt: new Date()
+          tileTop:     Number(document.getElementById("slTileTop").value),
+          tileBottom:  Number(document.getElementById("slTileBottom").value),
+          btnBottom:   Number(document.getElementById("slBtnBottom").value),
+          colorPreset: selectedPresetId,
+          updatedAt:   new Date()
         }, { merge: true });
+        msg.style.color = "green";
         msg.textContent = "✅ 保存しました！抽選画面に反映されます。";
         setTimeout(() => msg.textContent = "", 3000);
-      } catch(e) { msg.style.color="red"; msg.textContent = "❌ 保存エラー: " + e.message; }
+      } catch(e) {
+        msg.style.color = "red";
+        msg.textContent = "❌ 保存エラー: " + e.message;
+      }
     });
 
     // ── タイトル ──────────────────────────────────────────────────
@@ -411,15 +409,15 @@
       const wrap=document.getElementById(wrapId), msg=document.getElementById(msgId);
       btn.disabled=true; wrap.style.display="block"; msg.textContent="アップロード中…"; msg.style.color="#333";
       try {
-        const task = uploadBytesResumable(sRef(stor, `lottery/${folder}/${Date.now()}_${file.name}`), file);
-        await new Promise((res,rej) => task.on("state_changed", s => { bar.style.width=Math.round(s.bytesTransferred/s.totalBytes*100)+"%"; }, rej, res));
+        const task = uploadBytesResumable(sRef(stor,`lottery/${folder}/${Date.now()}_${file.name}`), file);
+        await new Promise((res,rej) => task.on("state_changed",
+          s => { bar.style.width=Math.round(s.bytesTransferred/s.totalBytes*100)+"%"; }, rej, res));
         const url = await getDownloadURL(task.snapshot.ref);
-        await addDoc(collection(db, fsCol), { url, createdAt: new Date() });
+        await addDoc(collection(db,fsCol), { url, createdAt: new Date() });
         msg.textContent="✅ アップロード完了！"; msg.style.color="green";
       } catch(e) { msg.textContent="❌ エラー: "+e.message; msg.style.color="red"; }
       finally { btn.disabled=false; setTimeout(()=>{ wrap.style.display="none"; bar.style.width="0%"; },2000); }
     }
-
     document.getElementById("bgUploadBtn").addEventListener("click", () => {
       const f=document.getElementById("bgFileInput").files[0];
       if (!f) { alert("ファイルを選択してください。"); return; }
@@ -468,14 +466,18 @@
       if (snap.exists()) {
         await setDoc(configRef,{[configKey]:snap.data().url,updatedAt:new Date()},{merge:true});
         alert("画像が更新されました。");
-        if (configKey==="currentBgImageUrl") currentBgUrl=snap.data().url;
-        else currentCenterUrl=snap.data().url;
+        if (configKey==="currentCenterImageUrl") {
+          document.getElementById("previewBg").src = snap.data().url;
+        }
       }
     }
 
     function setupImageLists() {
       getDoc(configRef).then(s => {
-        if (s.exists()) { currentBgUrl=s.data().currentBgImageUrl||""; currentCenterUrl=s.data().currentCenterImageUrl||""; }
+        if (s.exists()) {
+          currentBgUrl    = s.data().currentBgImageUrl    || "";
+          currentCenterUrl= s.data().currentCenterImageUrl|| "";
+        }
       });
       onSnapshot(collection(db,"displayBgImages"),     s=>renderList(s,"bgList",    "bgSelection",    currentBgUrl,    "displayBgImages"));
       onSnapshot(collection(db,"displayCenterImages"), s=>renderList(s,"centerList","centerSelection",currentCenterUrl,"displayCenterImages"));
