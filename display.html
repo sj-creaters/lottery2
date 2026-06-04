@@ -42,6 +42,8 @@
     .sample-tile { width: 30px; height: 18px; border-radius: 4px; border: 2px solid; font-size: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
     .sample-btn { width: 28px; height: 28px; border-radius: 50%; font-size: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .preset-label { font-size: 12px; font-weight: bold; color: #333; margin-top: 4px; }
+    .shape-btn { padding:6px 16px; border:2px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px; margin-top:4px; }
+    .shape-btn.selected { border-color:#007bff; background:#e8f0fe; color:#007bff; font-weight:bold; }
     .save-btn { background: #007bff; color: white; border: none; border-radius: 6px; padding: 10px 28px; font-size: 16px; cursor: pointer; margin-top: 8px; }
     .save-btn:hover { background: #0056b3; }
     .save-msg { margin-top: 8px; font-size: 14px; color: green; }
@@ -86,7 +88,21 @@
               <label>タイル 上端</label>
               <input type="range" id="slTileTop" min="10" max="65" step="1" value="40">
               <span class="slider-val" id="valTileTop">40</span>%
+              <div class="slider-row">
+              <label>タイル 高さ</label>
+              <input type="range" id="slTileHeight" min="28" max="80" step="1" value="40">
+              <span class="slider-val" id="valTileHeight">40</span>px
             </div>
+          </div>
+          <div class="form-group">
+            <strong>タイル 形状</strong>
+            <div id="shapeSelector" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button type="button" class="shape-btn" data-shape="rect">四角</button>
+              <button type="button" class="shape-btn selected" data-shape="rounded">角丸</button>
+              <button type="button" class="shape-btn" data-shape="pill">楕円</button>
+              <button type="button" class="shape-btn" data-shape="circle">円</button>
+            </div>
+          </div>
             <div class="slider-row">
               <label>タイル 下端（余白）</label>
               <input type="range" id="slTileBottom" min="10" max="55" step="1" value="30">
@@ -239,6 +255,14 @@
     ];
 
     let selectedPresetId = 'classic';
+    let selectedShape = 'rounded';
+
+    const SHAPE_MAP = {
+      rect:    { radius: '6px',  aspect: 'auto' },
+      rounded: { radius: '16px', aspect: 'auto' },
+      pill:    { radius: '50px', aspect: 'auto' },
+      circle:  { radius: '50%',  aspect: '1'    },
+    };
 
     // ── 認証 ─────────────────────────────────────────────────────
     onAuthStateChanged(auth, user => {
@@ -351,6 +375,12 @@
         if (d.tileTop    != null) { document.getElementById("slTileTop").value    = d.tileTop;    document.getElementById("valTileTop").textContent    = d.tileTop; }
         if (d.tileBottom != null) { document.getElementById("slTileBottom").value = d.tileBottom; document.getElementById("valTileBottom").textContent = d.tileBottom; }
         if (d.btnBottom  != null) { document.getElementById("slBtnBottom").value  = d.btnBottom;  document.getElementById("valBtnBottom").textContent  = d.btnBottom; }
+        if (d.tileHeight != null) { document.getElementById("slTileHeight").value = d.tileHeight; document.getElementById("valTileHeight").textContent = d.tileHeight; }
+        if (d.tileShape) {
+          selectedShape = d.tileShape;
+          document.querySelectorAll(".shape-btn").forEach(b => b.classList.toggle("selected", b.dataset.shape === d.tileShape));
+          document.getElementById("slTileHeight").disabled = d.tileShape === 'circle';
+        }
         if (d.colorPreset) {
           selectedPresetId = d.colorPreset;
           document.querySelectorAll(".preset-card").forEach(c => c.classList.toggle("selected", c.dataset.id === d.colorPreset));
@@ -379,6 +409,8 @@
           tileTop:     Number(document.getElementById("slTileTop").value),
           tileBottom:  Number(document.getElementById("slTileBottom").value),
           btnBottom:   Number(document.getElementById("slBtnBottom").value),
+          tileHeight:  Number(document.getElementById("slTileHeight").value),
+          tileShape:   selectedShape,
           colorPreset: selectedPresetId,
           updatedAt:   new Date()
         }, { merge: true });
