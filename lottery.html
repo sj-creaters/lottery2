@@ -27,12 +27,13 @@
       justify-items: center; align-items: center;
     }
     .tile {
-      width: 97%; height: 40px;
+      width: 97%; height: var(--tile-height, 40px);
+      aspect-ratio: var(--tile-aspect, auto);
       display: flex; align-items: center; justify-content: center;
       padding: 0 10px;
       border: 2px solid var(--tile-border, #aaa);
       font-size: 14px; font-family: 'Arial Black', Gadget, sans-serif;
-      font-weight: bold; border-radius: 8px;
+      font-weight: bold; border-radius: var(--tile-radius, 8px);
       background-color: var(--tile-bg, rgba(255,255,255,0.95));
       color: var(--tile-color, #333);
       box-sizing: border-box; overflow: hidden;
@@ -203,6 +204,19 @@
       ov.style.bottom = (d.tileBottom ?? 30) + "%";
       document.getElementById("startBtn").style.bottom = (d.btnBottom ?? 25) + "%";
       applyPreset(d.colorPreset || "classic");
+
+      // ▼ タイル高さ・形状
+      const shapeMap = {
+        rect:    { radius: '6px',  aspect: 'auto' },
+        rounded: { radius: '16px', aspect: 'auto' },
+        pill:    { radius: '50px', aspect: 'auto' },
+        circle:  { radius: '50%',  aspect: '1'    },
+      };
+      const sh = shapeMap[d.tileShape || 'rounded'] || shapeMap.rounded;
+      const rs = document.documentElement.style;
+      rs.setProperty('--tile-radius', sh.radius);
+      rs.setProperty('--tile-aspect', sh.aspect);
+      rs.setProperty('--tile-height', sh.aspect === '1' ? 'auto' : (d.tileHeight ?? 40) + 'px');
     }
 
     // ── 統計表示 ─────────────────────────────────────────────
