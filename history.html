@@ -5,17 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>抽選履歴</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2 { text-align: center; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h2, h3 { text-align: center; }
     .nav-btn {
       display: block; text-align: center; margin: 10px 0;
       padding: 8px 16px; font-size: 16px; text-decoration: none;
       background-color: #007bff; color: white; border-radius: 4px;
       width: 200px; margin-left: auto; margin-right: auto;
     }
-    table { border-collapse: collapse; width: 100%; max-width: 600px; margin: 0 auto; }
-    th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
-    th { background-color: #f0f0f0; }
+
+    /* CSVボタン */
+    #csvBtn {
+      display: block; margin: 12px auto;
+      padding: 10px 24px; font-size: 15px; cursor: pointer;
+      background: #28a745; color: white; border: none;
+      border-radius: 6px; font-weight: bold;
+    }
+    #csvBtn:hover { background: #218838; }
+
+    /* ── 集計表 ── */
+    .pivot-wrap {
+      overflow-x: auto; max-width: 100%;
+      margin: 0 auto 30px; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    #pivotTable {
+      border-collapse: collapse; white-space: nowrap;
+      background: #fff; min-width: 400px;
+    }
+    #pivotTable th, #pivotTable td {
+      border: 1px solid #ccc; padding: 7px 12px; text-align: center; font-size: 14px;
+    }
+    #pivotTable thead th {
+      background: #1a237e; color: white; font-weight: bold;
+    }
+    /* 賞名列（左端）を固定 */
+    #pivotTable th:first-child,
+    #pivotTable td:first-child {
+      position: sticky; left: 0; z-index: 2;
+      background: #e8eaf6; font-weight: bold; text-align: left;
+      border-right: 2px solid #9fa8da;
+    }
+    #pivotTable thead th:first-child {
+      background: #1a237e; color: white;
+    }
+    /* 累計列（右端）*/
+    .col-total {
+      background: #fff8e1 !important; font-weight: bold; color: #e65100;
+    }
+    /* 日計行（最下行）*/
+    .row-total td {
+      background: #e8f5e9 !important; font-weight: bold; color: #2e7d32;
+    }
+    .row-total td:first-child {
+      background: #c8e6c9 !important;
+    }
+    /* ゼロ値はグレー */
+    .zero { color: #bbb; }
+
+    /* ── 履歴テーブル ── */
+    .history-wrap {
+      overflow-x: auto; max-width: 100%;
+      margin: 0 auto; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    #historyTable {
+      border-collapse: collapse; width: 100%;
+      max-width: 600px; margin: 0 auto; background: #fff;
+    }
+    #historyTable th, #historyTable td {
+      border: 1px solid #aaa; padding: 8px; text-align: center; font-size: 14px;
+    }
+    #historyTable th { background-color: #f0f0f0; font-weight: bold; }
+    #historyTable tr:nth-child(even) { background: #fafafa; }
+
+    .section-label {
+      font-size: 16px; font-weight: bold; color: #333;
+      margin: 24px 0 8px; text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -38,30 +105,44 @@
 
   <!-- メインコンテンツ -->
   <div id="mainContainer" style="display:none;">
-    <a class="nav-btn" href="index.html">メイン画面に戻る</a>
 
+    <a class="nav-btn" href="index.html">メイン画面に戻る</a>
     <h2>抽選履歴</h2>
 
-    <table id="historyTable">
-      <thead>
-        <tr>
-          <th>賞名称</th>
-          <th>日付</th>
-          <th>時間</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <!-- CSV ダウンロード -->
+    <button id="csvBtn">📥 CSVダウンロード</button>
+
+    <!-- 集計表（上段） -->
+    <div class="section-label">📊 日別集計表</div>
+    <div class="pivot-wrap">
+      <table id="pivotTable">
+        <thead><tr><th>賞名称</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- 履歴一覧（下段） -->
+    <div class="section-label">📋 抽選履歴一覧</div>
+    <div class="history-wrap">
+      <table id="historyTable">
+        <thead>
+          <tr><th>賞名称</th><th>日付</th><th>時刻</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
     <a class="nav-btn" href="index.html" style="margin-top:20px;">メイン画面に戻る</a>
+
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot }
-      from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+    import {
+      getFirestore, collection, query, orderBy, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDggkQeswndbsRb0d0K8WOv2L3i6o4vh0",
@@ -76,50 +157,207 @@
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
-
     const STAFF_EMAIL = "mi3254@sendai-mitsukoshi.co.jp";
 
-    // ── 認証状態を監視 ────────────────────────────────────────
+    // ── データ ───────────────────────────────────────────────────
+    let historyData = [];
+    let prizesData  = [];
+
+    // ── 認証 ─────────────────────────────────────────────────────
     onAuthStateChanged(auth, user => {
       if (user) {
         document.getElementById("loginOverlay").style.display = "none";
         document.getElementById("mainContainer").style.display = "block";
+        startListeners();
       }
     });
-
-    // ── ログインボタン ────────────────────────────────────────
     document.getElementById("loginBtn").addEventListener("click", async () => {
-      const password = document.getElementById("passwordInput").value;
-      const errDiv   = document.getElementById("loginError");
-      errDiv.textContent = "";
-      try {
-        await signInWithEmailAndPassword(auth, STAFF_EMAIL, password);
-      } catch(e) {
-        errDiv.textContent = "パスワードが違います";
-      }
+      const pw  = document.getElementById("passwordInput").value;
+      const err = document.getElementById("loginError");
+      err.textContent = "";
+      try { await signInWithEmailAndPassword(auth, STAFF_EMAIL, pw); }
+      catch(e) { err.textContent = "パスワードが違います"; }
     });
 
-    // ── 履歴リアルタイム表示 ─────────────────────────────────
-    const tbody = document.querySelector("#historyTable tbody");
-    onSnapshot(
-      query(collection(db, "history"), orderBy("timestamp", "desc")),
-      snapshot => {
-        tbody.innerHTML = "";
-        snapshot.forEach(s => {
-          const d = s.data();
-          const dateObj = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
-          const tr = document.createElement("tr");
-          [d.prizeName || "", dateObj.toLocaleDateString(), dateObj.toLocaleTimeString()]
-            .forEach(text => {
-              const td = document.createElement("td");
-              td.textContent = text;
-              tr.appendChild(td);
-            });
-          tbody.appendChild(tr);
+    // ── リスナー起動 ─────────────────────────────────────────────
+    let listenersStarted = false;
+    function startListeners() {
+      if (listenersStarted) return;
+      listenersStarted = true;
+
+      // 賞マスタ（ランク順）
+      onSnapshot(query(collection(db, "prizes"), orderBy("rank", "asc")), snap => {
+        prizesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        refresh();
+      });
+
+      // 履歴（新しい順）
+      onSnapshot(
+        query(collection(db, "history"), orderBy("timestamp", "desc")),
+        snap => {
+          historyData = snap.docs.map(d => d.data());
+          refresh();
+        },
+        err => console.error("履歴取得エラー:", err)
+      );
+    }
+
+    // ── 全体更新 ─────────────────────────────────────────────────
+    function refresh() {
+      buildPivotTable();
+      buildHistoryTable();
+    }
+
+    // ── ユーティリティ：Timestampを日付文字列に ──────────────────
+    function toDateStr(ts) {
+      const d = ts?.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
+    }
+    function toDate(ts) {
+      return ts?.toDate ? ts.toDate() : new Date(ts);
+    }
+
+    // ── 集計表 ───────────────────────────────────────────────────
+    function buildPivotTable() {
+      const table = document.getElementById("pivotTable");
+      const thead = table.querySelector("thead");
+      const tbody = table.querySelector("tbody");
+
+      if (historyData.length === 0) {
+        thead.innerHTML = "<tr><th>賞名称</th></tr>";
+        tbody.innerHTML = "<tr><td style='color:#aaa;padding:16px;'>データがありません</td></tr>";
+        return;
+      }
+
+      // 日付一覧（昇順）
+      const dateSet = new Set(historyData.map(h => toDateStr(h.timestamp)));
+      const dates = Array.from(dateSet).sort((a, b) => new Date(a) - new Date(b));
+
+      // 賞名一覧（rankでソート。履歴にしか存在しない賞は末尾）
+      const rankMap = {};
+      prizesData.forEach(p => { rankMap[p.name] = p.rank; });
+      const nameSet = new Set(historyData.map(h => h.prizeName || '不明'));
+      const prizeNames = Array.from(nameSet).sort((a, b) =>
+        (rankMap[a] ?? 9999) - (rankMap[b] ?? 9999)
+      );
+
+      // カウント集計
+      const counts = {};  // counts[name][date] = count
+      prizeNames.forEach(n => { counts[n] = {}; });
+      historyData.forEach(h => {
+        const name = h.prizeName || '不明';
+        const date = toDateStr(h.timestamp);
+        counts[name][date] = (counts[name][date] || 0) + 1;
+      });
+
+      // ── ヘッダー行 ──
+      let headHtml = "<tr><th>賞名称</th>";
+      dates.forEach(d => { headHtml += `<th>${d}</th>`; });
+      headHtml += "<th class='col-total'>累計</th></tr>";
+      thead.innerHTML = headHtml;
+
+      // ── データ行 ──
+      tbody.innerHTML = "";
+      const dateTotals = {};
+      dates.forEach(d => { dateTotals[d] = 0; });
+      let grandTotal = 0;
+
+      prizeNames.forEach(name => {
+        const tr = document.createElement("tr");
+        let rowTotal = 0;
+
+        // 賞名セル
+        const tdName = document.createElement("td");
+        tdName.textContent = name;
+        tr.appendChild(tdName);
+
+        // 日付ごとのセル
+        dates.forEach(d => {
+          const cnt = counts[name][d] || 0;
+          rowTotal += cnt;
+          dateTotals[d] += cnt;
+          const td = document.createElement("td");
+          td.textContent = cnt === 0 ? '-' : cnt;
+          if (cnt === 0) td.className = 'zero';
+          tr.appendChild(td);
         });
-      },
-      err => console.error("履歴取得エラー:", err)
-    );
+
+        // 累計セル
+        grandTotal += rowTotal;
+        const tdTotal = document.createElement("td");
+        tdTotal.textContent = rowTotal;
+        tdTotal.className = 'col-total';
+        tr.appendChild(tdTotal);
+
+        tbody.appendChild(tr);
+      });
+
+      // ── 日計行 ──
+      const trTotal = document.createElement("tr");
+      trTotal.className = "row-total";
+      const tdLabel = document.createElement("td");
+      tdLabel.textContent = "日計";
+      trTotal.appendChild(tdLabel);
+
+      dates.forEach(d => {
+        const td = document.createElement("td");
+        td.textContent = dateTotals[d];
+        trTotal.appendChild(td);
+      });
+
+      // 総合計セル
+      const tdGrand = document.createElement("td");
+      tdGrand.textContent = grandTotal;
+      tdGrand.className = 'col-total';
+      trTotal.appendChild(tdGrand);
+      tbody.appendChild(trTotal);
+    }
+
+    // ── 履歴一覧テーブル ─────────────────────────────────────────
+    function buildHistoryTable() {
+      const tbody = document.querySelector("#historyTable tbody");
+      tbody.innerHTML = "";
+      historyData.forEach(d => {
+        const dateObj = toDate(d.timestamp);
+        const tr = document.createElement("tr");
+        [d.prizeName || "", dateObj.toLocaleDateString('ja-JP'), dateObj.toLocaleTimeString('ja-JP')]
+          .forEach(text => {
+            const td = document.createElement("td");
+            td.textContent = text;
+            tr.appendChild(td);
+          });
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── CSVダウンロード ──────────────────────────────────────────
+    document.getElementById("csvBtn").addEventListener("click", () => {
+      if (historyData.length === 0) { alert("履歴データがありません。"); return; }
+
+      const rows = [["賞名称", "日付", "時刻"]];
+      [...historyData]
+        .sort((a, b) => toDate(a.timestamp) - toDate(b.timestamp))
+        .forEach(h => {
+          const d = toDate(h.timestamp);
+          rows.push([
+            h.prizeName || "",
+            d.toLocaleDateString('ja-JP'),
+            d.toLocaleTimeString('ja-JP')
+          ]);
+        });
+
+      // UTF-8 BOM付きCSV（Excelで文字化けしない）
+      const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `抽選履歴_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
   </script>
 </body>
 </html>
