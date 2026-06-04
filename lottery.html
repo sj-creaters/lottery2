@@ -115,7 +115,7 @@
       from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
     import {
       getFirestore, collection, query, orderBy, onSnapshot,
-      doc, getDoc, getDocs, addDoc
+      doc, getDocs, addDoc
     } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -142,6 +142,8 @@
         loadDisplayConfig();
       }
     });
+
+    function loadDisplayConfig() { watchDisplayConfig(); }
 
     // ── ログインボタン ────────────────────────────────────────
     document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -185,38 +187,48 @@
       r.setProperty('--btn-shadow',   p.btnShadow);
     }
 
-    // ── 表示設定読み込み ──────────────────────────────────────
-    async function loadDisplayConfig() {
-      const snap = await getDoc(doc(db, "displaySettings", "config"));
-      if (!snap.exists()) return;
-      const d = snap.data();
-      const titleElem = document.getElementById("pageTitle");
-      if (d.titleVisible !== false && d.title) {
-        titleElem.textContent = d.title; titleElem.style.display = "block";
-      } else { titleElem.style.display = "none"; }
-      if (d.currentBgImageUrl) {
-        document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
-        document.body.style.backgroundRepeat = "repeat";
-      }
-      document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
-      const ov = document.getElementById("tilesOverlay");
-      ov.style.top    = (d.tileTop    ?? 40) + "%";
-      ov.style.bottom = (d.tileBottom ?? 30) + "%";
-      document.getElementById("startBtn").style.bottom = (d.btnBottom ?? 25) + "%";
-      applyPreset(d.colorPreset || "classic");
+    // ── 表示設定リアルタイム同期 ──────────────────────────────
+    const SHAPE_MAP = {
+      rect:    { radius: '4px',  aspect: 'auto' },
+      rounded: { radius: '16px', aspect: 'auto' },
+      pill:    { radius: '50px', aspect: 'auto' },
+      circle:  { radius: '50%',  aspect: '1'    },
+    };
 
-      // ▼ タイル高さ・形状
-      const shapeMap = {
-        rect:    { radius: '6px',  aspect: 'auto' },
-        rounded: { radius: '16px', aspect: 'auto' },
-        pill:    { radius: '50px', aspect: 'auto' },
-        circle:  { radius: '50%',  aspect: '1'    },
-      };
-      const sh = shapeMap[d.tileShape || 'rounded'] || shapeMap.rounded;
-      const rs = document.documentElement.style;
-      rs.setProperty('--tile-radius', sh.radius);
-      rs.setProperty('--tile-aspect', sh.aspect);
-      rs.setProperty('--tile-height', sh.aspect === '1' ? 'auto' : (d.tileHeight ?? 40) + 'px');
+    function watchDisplayConfig() {
+      onSnapshot(doc(db, "displaySettings", "config"), snap => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+
+        // タイトル
+        const titleElem = document.getElementById("pageTitle");
+        if (d.titleVisible !== false && d.title) {
+          titleElem.textContent = d.title; titleElem.style.display = "block";
+        } else { titleElem.style.display = "none"; }
+
+        // 背景・中央画像
+        if (d.currentBgImageUrl) {
+          document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
+          document.body.style.backgroundRepeat = "repeat";
+        }
+        document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
+
+        // タイル位置・ボタン位置
+        const ov = document.getElementById("tilesOverlay");
+        ov.style.top    = (d.tileTop    ?? 40) + "%";
+        ov.style.bottom = (d.tileBottom ?? 30) + "%";
+        document.getElementById("startBtn").style.bottom = (d.btnBottom ?? 25) + "%";
+
+        // カラープリセット
+        applyPreset(d.colorPreset || "classic");
+
+        // タイル高さ・形状
+        const sh = SHAPE_MAP[d.tileShape || 'rounded'] || SHAPE_MAP.rounded;
+        const rs = document.documentElement.style;
+        rs.setProperty('--tile-radius', sh.radius);
+        rs.setProperty('--tile-aspect', sh.aspect);
+        rs.setProperty('--tile-height', sh.aspect === '1' ? 'auto' : (d.tileHeight ?? 40) + 'px');
+      });
     }
 
     // ── 統計表示 ─────────────────────────────────────────────
