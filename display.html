@@ -469,7 +469,7 @@
       // 賞名をFirestoreから取得してプレビュータイルに表示
       try {
         const prizesSnap = await getDocs(query(collection(db, "prizes"), orderBy("rank", "asc")));
-        const names = prizesSnap.docs.map(d => d.data().name).slice(0, 6);
+        const names = prizesSnap.docs.map(d => d.data().name);
         buildPreviewTiles(names.length ? names : ["1等","2等","3等","4等","5等"]);
       } catch(e) {
         buildPreviewTiles(["1等","2等","3等","4等","5等"]);
