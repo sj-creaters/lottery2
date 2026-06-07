@@ -25,14 +25,14 @@
     .upload-msg { font-size:13px; margin-top:6px; }
     .divider { display:flex; align-items:center; gap:10px; margin:12px 0; color:#888; font-size:13px; }
     .divider::before, .divider::after { content:""; flex:1; border-top:1px solid #ccc; }
-    /* レイアウト設定 */
+    /* スライダー */
     .slider-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
     .slider-row label { width:120px; margin:0; flex-shrink:0; font-size:14px; }
     .slider-row input[type="range"] { flex:1; max-width:260px; }
     .slider-row input[type="range"]:disabled { opacity:0.4; }
     .slider-val { width:42px; text-align:right; font-weight:bold; font-size:14px; color:#007bff; }
     .slider-unit { font-size:13px; color:#555; }
-    /* カラープリセット */
+    /* プリセット */
     .preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin:12px 0; }
     .preset-card { border:3px solid transparent; border-radius:10px; padding:8px; cursor:pointer; text-align:center; background:#f5f5f5; transition:border-color 0.2s,transform 0.1s; user-select:none; }
     .preset-card:hover { transform:scale(1.03); }
@@ -41,7 +41,7 @@
     .sample-tile { width:30px; height:18px; border-radius:4px; border:2px solid; font-size:8px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
     .sample-btn { width:28px; height:28px; border-radius:50%; font-size:8px; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .preset-label { font-size:12px; font-weight:bold; color:#333; margin-top:4px; }
-    /* 形状ボタン */
+    /* 形状・フィットボタン */
     .shape-btn { padding:8px 18px; border:2px solid #aaa; border-radius:8px; background:#fff; cursor:pointer; font-size:14px; margin:4px; transition:all 0.15s; }
     .shape-btn:hover { border-color:#007bff; }
     .shape-btn.selected { border-color:#007bff; background:#e8f0fe; color:#007bff; font-weight:bold; }
@@ -49,6 +49,9 @@
     .save-btn { background:#007bff; color:white; border:none; border-radius:6px; padding:10px 28px; font-size:16px; cursor:pointer; margin-top:8px; }
     .save-btn:hover { background:#0056b3; }
     .save-msg { margin-top:8px; font-size:14px; }
+    /* クリアボタン */
+    .clear-btn { background:#dc3545; color:white; border:none; border-radius:6px; padding:10px 16px; font-size:14px; cursor:pointer; margin-top:8px; }
+    .clear-btn:hover { background:#b02a37; }
   </style>
 </head>
 <body>
@@ -67,55 +70,43 @@
 
   <!-- メインコンテンツ -->
   <div id="mainContainer" style="display:none;">
-
     <a class="nav-btn" href="index.html">メイン画面に戻る</a>
     <h2>Display 設定</h2>
 
     <!-- ══ 抽選画面レイアウト設定 ══ -->
     <div class="section">
       <h3>🎰 抽選画面レイアウト設定</h3>
-
       <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
 
         <!-- 左：コントロール -->
         <div style="flex:1;min-width:280px;">
-
-          <!-- タイル位置 -->
           <div class="form-group">
             <strong>タイル表示位置</strong>
-            <div style="font-size:12px;color:#888;margin:4px 0 10px;">スライダーを動かすと右のプレビューに即反映されます</div>
+            <div style="font-size:12px;color:#888;margin:4px 0 10px;">スライダーを動かすと右のプレビューに即反映</div>
             <div class="slider-row">
               <label>タイル 上端</label>
               <input type="range" id="slTileTop" min="10" max="65" step="1" value="40">
-              <span class="slider-val" id="valTileTop">40</span>
-              <span class="slider-unit">%</span>
+              <span class="slider-val" id="valTileTop">40</span><span class="slider-unit">%</span>
             </div>
             <div class="slider-row">
               <label>タイル 下端余白</label>
               <input type="range" id="slTileBottom" min="10" max="55" step="1" value="30">
-              <span class="slider-val" id="valTileBottom">30</span>
-              <span class="slider-unit">%</span>
+              <span class="slider-val" id="valTileBottom">30</span><span class="slider-unit">%</span>
             </div>
             <div class="slider-row">
               <label>スタートボタン</label>
               <input type="range" id="slBtnBottom" min="5" max="50" step="1" value="25">
-              <span class="slider-val" id="valBtnBottom">25</span>
-              <span class="slider-unit">%</span>
+              <span class="slider-val" id="valBtnBottom">25</span><span class="slider-unit">%</span>
             </div>
           </div>
-
-          <!-- タイル高さ -->
           <div class="form-group">
             <strong>タイル 高さ</strong>
             <div class="slider-row" style="margin-top:8px;">
               <label>高さ</label>
               <input type="range" id="slTileHeight" min="28" max="80" step="1" value="40">
-              <span class="slider-val" id="valTileHeight">40</span>
-              <span class="slider-unit" id="unitTileHeight">px</span>
+              <span class="slider-val" id="valTileHeight">40</span><span class="slider-unit" id="unitTileHeight">px</span>
             </div>
           </div>
-
-          <!-- タイル形状 -->
           <div class="form-group">
             <strong>タイル 形状</strong>
             <div style="margin-top:8px;">
@@ -125,14 +116,11 @@
               <button type="button" class="shape-btn" data-shape="circle">円</button>
             </div>
           </div>
-
-          <!-- カラープリセット -->
           <div class="form-group">
             <strong>カラープリセット</strong>
             <div style="font-size:12px;color:#888;margin:4px 0 8px;">クリックでプレビューに即反映</div>
             <div class="preset-grid" id="presetGrid"></div>
           </div>
-
         </div>
 
         <!-- 右：プレビュー -->
@@ -145,11 +133,69 @@
           </div>
           <div style="font-size:11px;color:#888;margin-top:6px;text-align:center;">実際と同じ縦横比</div>
         </div>
-
       </div>
 
       <button class="save-btn" id="layoutSaveBtn">💾 抽選画面設定を保存</button>
       <div class="save-msg" id="layoutSaveMsg"></div>
+    </div>
+
+    <hr>
+
+    <!-- ══ タイルアイコン設定 ══ -->
+    <div class="section">
+      <h3>🖼️ タイルアイコン設定</h3>
+      <p style="font-size:13px;color:#666;text-align:center;margin-bottom:16px;">
+        全タイル共通のアイコン画像を設定します。未設定の場合は色タイルで表示されます。
+      </p>
+
+      <div class="upload-box">
+        <label>📁 アイコン画像をアップロード</label>
+        <div class="form-group"><input type="file" id="iconFileInput" accept="image/*"></div>
+        <button type="button" class="upload-btn" id="iconUploadBtn">アップロード</button>
+        <div class="progress-bar-wrap" id="iconProgressWrap"><div class="progress-bar" id="iconProgressBar"></div></div>
+        <div class="upload-msg" id="iconUploadMsg"></div>
+      </div>
+
+      <div id="iconList" style="margin-top:12px;"></div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+        <button type="button" id="iconSelectBtn" style="padding:10px 20px;font-size:15px;cursor:pointer;">✅ 選択して採用</button>
+        <button type="button" id="iconClearBtn" class="clear-btn">🗑️ アイコンなしに戻す</button>
+      </div>
+
+      <hr style="margin:20px 0;">
+
+      <strong>アイコン表示設定</strong>
+      <div class="form-group" style="margin-top:12px;">
+        <label style="margin-bottom:6px;">画像のフィット方法</label>
+        <div>
+          <button type="button" class="shape-btn selected" data-fit="cover">cover（全面に敷く）</button>
+          <button type="button" class="shape-btn" data-fit="contain">contain（全体を収める）</button>
+        </div>
+      </div>
+
+      <strong>テキストラベル設定</strong>
+      <div class="form-group" style="margin-top:12px;">
+        <div class="slider-row">
+          <label>背景色</label>
+          <input type="color" id="labelColor" value="#000000"
+            style="width:48px;height:36px;border:1px solid #aaa;border-radius:4px;cursor:pointer;padding:2px;">
+        </div>
+        <div class="slider-row">
+          <label>透明度</label>
+          <input type="range" id="labelOpacity" min="0" max="1" step="0.05" value="0.6">
+          <span class="slider-val" id="valLabelOpacity">0.6</span>
+          <span class="slider-unit"></span>
+        </div>
+        <div class="slider-row">
+          <label>角丸</label>
+          <input type="range" id="labelRadius" min="0" max="20" step="1" value="6">
+          <span class="slider-val" id="valLabelRadius">6</span>
+          <span class="slider-unit">px</span>
+        </div>
+      </div>
+
+      <button class="save-btn" id="iconSaveBtn">💾 アイコン設定を保存</button>
+      <div class="save-msg" id="iconSaveMsg"></div>
     </div>
 
     <hr>
@@ -214,7 +260,6 @@
     </div>
 
     <a class="nav-btn" href="index.html">メイン画面に戻る</a>
-
   </div><!-- /mainContainer -->
 
   <script type="module">
@@ -246,14 +291,13 @@
     const configRef = doc(db, "displaySettings", "config");
     const STAFF_EMAIL = "mi3254@sendai-mitsukoshi.co.jp";
 
-    // ── 定数 ─────────────────────────────────────────────────────
+    // ── 定数・状態 ────────────────────────────────────────────────
     const SHAPE_MAP = {
-      rect:    { radius: '4px',  aspect: '' },
-      rounded: { radius: '16px', aspect: '' },
-      pill:    { radius: '50px', aspect: '' },
-      circle:  { radius: '50%',  aspect: '1' },
+      rect:    { radius:'4px',  aspect:'' },
+      rounded: { radius:'16px', aspect:'' },
+      pill:    { radius:'50px', aspect:'' },
+      circle:  { radius:'50%',  aspect:'1' },
     };
-
     const PRESETS = [
       { id:'classic',  label:'クラシック', bg:'rgba(255,255,255,0.95)', color:'#222',  border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   wBg:'magenta', wBorder:'red',     wColor:'white',   btnBg:'rgba(0,0,0,0.85)',  btnColor:'white', btnBorder:'none' },
       { id:'dark',     label:'ダーク',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',     aBg:'#FFD700', aBorder:'orange',   wBg:'#FF1493', wBorder:'red',     wColor:'white',   btnBg:'#111',              btnColor:'white', btnBorder:'2px solid #555' },
@@ -267,6 +311,25 @@
 
     let selectedPresetId = 'classic';
     let selectedShape    = 'rounded';
+    let selectedFit      = 'cover';
+    let previewIconUrl   = '';
+    let currentBgUrl     = '';
+    let currentCenterUrl = '';
+    let currentIconUrl   = '';
+
+    // ── ユーティリティ ────────────────────────────────────────────
+    function hexToRgba(hex, opacity) {
+      const r = parseInt(hex.slice(1,3),16);
+      const g = parseInt(hex.slice(3,5),16);
+      const b = parseInt(hex.slice(5,7),16);
+      return `rgba(${r},${g},${b},${opacity})`;
+    }
+    function parseRgba(rgba) {
+      const m = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (!m) return { hex:'#000000', opacity:'0.6' };
+      const h = n => parseInt(n).toString(16).padStart(2,'0');
+      return { hex:`#${h(m[1])}${h(m[2])}${h(m[3])}`, opacity: m[4] || '1' };
+    }
 
     // ── 認証 ─────────────────────────────────────────────────────
     onAuthStateChanged(auth, user => {
@@ -277,7 +340,7 @@
       }
     });
     document.getElementById("loginBtn").addEventListener("click", async () => {
-      const pw = document.getElementById("passwordInput").value;
+      const pw  = document.getElementById("passwordInput").value;
       const err = document.getElementById("loginError");
       err.textContent = "";
       try { await signInWithEmailAndPassword(auth, STAFF_EMAIL, pw); }
@@ -292,34 +355,45 @@
       setupImageLists();
     }
 
-    // ── コントロール設定（スライダー＋形状ボタン）────────────────
+    // ── コントロール設定 ──────────────────────────────────────────
     function setupControls() {
-      // スライダー4本
-      [
-        { id: 'TileTop',    unit: '%'  },
-        { id: 'TileBottom', unit: '%'  },
-        { id: 'BtnBottom',  unit: '%'  },
-        { id: 'TileHeight', unit: 'px' },
-      ].forEach(({ id }) => {
-        const sl  = document.getElementById("sl"  + id);
-        const val = document.getElementById("val" + id);
-        sl.addEventListener("input", () => {
-          val.textContent = sl.value;
+      // 位置・高さスライダー
+      ['TileTop','TileBottom','BtnBottom','TileHeight'].forEach(k => {
+        const sl = document.getElementById("sl"+k);
+        const vl = document.getElementById("val"+k);
+        if (!sl || !vl) return;
+        sl.addEventListener("input", () => { vl.textContent = sl.value; updatePreview(); });
+      });
+
+      // 形状ボタン
+      document.querySelectorAll("[data-shape]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-shape]").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedShape = btn.dataset.shape;
+          const isCircle = selectedShape === 'circle';
+          document.getElementById("slTileHeight").disabled = isCircle;
           updatePreview();
         });
       });
 
-      // 形状ボタン
-      document.querySelectorAll(".shape-btn").forEach(btn => {
+      // フィットボタン
+      document.querySelectorAll("[data-fit]").forEach(btn => {
         btn.addEventListener("click", () => {
-          document.querySelectorAll(".shape-btn").forEach(b => b.classList.remove("selected"));
+          document.querySelectorAll("[data-fit]").forEach(b => b.classList.remove("selected"));
           btn.classList.add("selected");
-          selectedShape = btn.dataset.shape;
-          const isCircle = selectedShape === 'circle';
-          document.getElementById("slTileHeight").disabled    = isCircle;
-          document.getElementById("unitTileHeight").style.opacity = isCircle ? '0.4' : '1';
-          updatePreview();
+          selectedFit = btn.dataset.fit;
         });
+      });
+
+      // ラベル設定
+      document.getElementById("labelColor").addEventListener("input", updatePreview);
+      document.getElementById("labelOpacity").addEventListener("input", e => {
+        document.getElementById("valLabelOpacity").textContent = e.target.value;
+        updatePreview();
+      });
+      document.getElementById("labelRadius").addEventListener("input", e => {
+        document.getElementById("valLabelRadius").textContent = e.target.value;
       });
     }
 
@@ -356,34 +430,62 @@
 
     // ── プレビュー更新 ────────────────────────────────────────────
     function updatePreview() {
-      const top    = Number(document.getElementById("slTileTop").value);
-      const bottom = Number(document.getElementById("slTileBottom").value);
-      const btn    = Number(document.getElementById("slBtnBottom").value);
-      const h      = Number(document.getElementById("slTileHeight").value);
-      const p      = PRESETS.find(x => x.id === selectedPresetId) || PRESETS[0];
-      const sh     = SHAPE_MAP[selectedShape] || SHAPE_MAP.rounded;
+      const top     = Number(document.getElementById("slTileTop").value);
+      const bottom  = Number(document.getElementById("slTileBottom").value);
+      const btn     = Number(document.getElementById("slBtnBottom").value);
+      const h       = Number(document.getElementById("slTileHeight").value);
+      const p       = PRESETS.find(x => x.id === selectedPresetId) || PRESETS[0];
+      const sh      = SHAPE_MAP[selectedShape] || SHAPE_MAP.rounded;
+      const labelBg = hexToRgba(
+        document.getElementById("labelColor").value,
+        document.getElementById("labelOpacity").value
+      );
+      const labelR  = document.getElementById("labelRadius").value + "px";
 
-      // タイルエリア位置
       const tiles = document.getElementById("previewTiles");
       tiles.style.top    = top + "%";
       tiles.style.bottom = bottom + "%";
 
-      // 各タイルのスタイル更新
-      Array.from(tiles.children).forEach(t => {
-        t.style.background   = p.bg;
-        t.style.color        = p.color;
-        t.style.borderColor  = p.border;
-        t.style.borderRadius = sh.radius;
-        if (sh.aspect === '1') {
-          t.style.height      = 'auto';
-          t.style.aspectRatio = '1';
+      Array.from(tiles.children).forEach(tile => {
+        const name = tile.dataset.name || "";
+
+        if (previewIconUrl) {
+          // アイコンモード
+          tile.innerHTML = "";
+          tile.style.position = "relative";
+          tile.style.overflow = "hidden";
+          const img = document.createElement("img");
+          img.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;object-fit:" + selectedFit + ";z-index:0;";
+          img.src = previewIconUrl;
+          tile.appendChild(img);
+          const label = document.createElement("div");
+          label.style.cssText = `position:relative;z-index:2;background:${labelBg};color:${p.color};padding:2px 5px;border-radius:${labelR};font-size:6px;text-align:center;word-break:break-word;white-space:normal;max-width:92%;`;
+          label.textContent = name;
+          tile.appendChild(label);
+          tile.style.background = p.bg;
+          tile.style.justifyContent = "center";
+          tile.style.display = "flex";
+          tile.style.alignItems = "center";
         } else {
-          t.style.aspectRatio = '';
-          t.style.height      = Math.max(10, Math.round(h * 0.42)) + 'px';
+          // テキストモード
+          tile.innerHTML = name;
+          tile.style.background = p.bg;
+          tile.style.color = p.color;
+          tile.style.overflow = "hidden";
+          tile.style.whiteSpace = "nowrap";
+        }
+
+        tile.style.borderColor  = p.border;
+        tile.style.borderRadius = sh.radius;
+        if (sh.aspect === '1') {
+          tile.style.height = 'auto';
+          tile.style.aspectRatio = '1';
+        } else {
+          tile.style.aspectRatio = '';
+          tile.style.height = Math.max(10, Math.round(h * 0.42)) + 'px';
         }
       });
 
-      // ボタン
       const pb = document.getElementById("previewBtn");
       pb.style.bottom     = btn + "%";
       pb.style.background = p.btnBg;
@@ -395,20 +497,15 @@
     function buildPreviewTiles(names) {
       const tiles = document.getElementById("previewTiles");
       tiles.innerHTML = "";
-      const cols = Math.min(names.length, 3);
-      tiles.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      tiles.style.gridTemplateColumns = `repeat(${Math.min(names.length,3)}, 1fr)`;
       names.forEach(name => {
         const t = document.createElement("div");
-        t.style.width          = '97%';
-        t.style.border         = '1px solid #aaa';
-        t.style.fontSize       = '7px';
-        t.style.display        = 'flex';
-        t.style.alignItems     = 'center';
-        t.style.justifyContent = 'center';
-        t.style.overflow       = 'hidden';
-        t.style.whiteSpace     = 'nowrap';
-        t.style.boxSizing      = 'border-box';
-        t.style.textAlign      = 'center';
+        t.dataset.name = name;
+        t.style.width = '97%'; t.style.border = '1px solid #aaa';
+        t.style.fontSize = '7px'; t.style.display = 'flex';
+        t.style.alignItems = 'center'; t.style.justifyContent = 'center';
+        t.style.overflow = 'hidden'; t.style.boxSizing = 'border-box';
+        t.style.textAlign = 'center'; t.style.position = 'relative';
         t.textContent = name;
         tiles.appendChild(t);
       });
@@ -428,36 +525,47 @@
         });
 
         // スライダー復元
-        const sliders = [
-          { id: 'TileTop',    val: d.tileTop    },
-          { id: 'TileBottom', val: d.tileBottom },
-          { id: 'BtnBottom',  val: d.btnBottom  },
-          { id: 'TileHeight', val: d.tileHeight },
-        ];
-        sliders.forEach(({ id, val }) => {
-          if (val == null) return;
-          document.getElementById("sl"  + id).value       = val;
-          document.getElementById("val" + id).textContent = val;
-        });
+        [['TileTop',d.tileTop],['TileBottom',d.tileBottom],['BtnBottom',d.btnBottom],['TileHeight',d.tileHeight]]
+          .forEach(([k, v]) => {
+            if (v == null) return;
+            const sl = document.getElementById("sl"+k);
+            const vl = document.getElementById("val"+k);
+            if (sl) sl.value = v;
+            if (vl) vl.textContent = v;
+          });
 
         // 形状復元
         if (d.tileShape) {
           selectedShape = d.tileShape;
-          document.querySelectorAll(".shape-btn").forEach(b => {
-            b.classList.toggle("selected", b.dataset.shape === d.tileShape);
-          });
-          const isCircle = d.tileShape === 'circle';
-          document.getElementById("slTileHeight").disabled = isCircle;
+          document.querySelectorAll("[data-shape]").forEach(b =>
+            b.classList.toggle("selected", b.dataset.shape === d.tileShape));
+          document.getElementById("slTileHeight").disabled = d.tileShape === 'circle';
         }
 
         // カラープリセット復元
-        if (d.colorPreset) {
-          selectedPresetId = d.colorPreset;
-          document.querySelectorAll(".preset-card").forEach(c => {
-            c.classList.toggle("selected", c.dataset.id === d.colorPreset);
-          });
-        } else {
-          document.querySelector(".preset-card")?.classList.add("selected");
+        selectedPresetId = d.colorPreset || 'classic';
+        document.querySelectorAll(".preset-card").forEach(c =>
+          c.classList.toggle("selected", c.dataset.id === selectedPresetId));
+
+        // アイコン設定復元
+        if (d.tileIconUrl) {
+          previewIconUrl = d.tileIconUrl;
+          currentIconUrl = d.tileIconUrl;
+        }
+        if (d.tileIconFit) {
+          selectedFit = d.tileIconFit;
+          document.querySelectorAll("[data-fit]").forEach(b =>
+            b.classList.toggle("selected", b.dataset.fit === d.tileIconFit));
+        }
+        if (d.tileLabelBg) {
+          const parsed = parseRgba(d.tileLabelBg);
+          document.getElementById("labelColor").value = parsed.hex;
+          document.getElementById("labelOpacity").value = parsed.opacity;
+          document.getElementById("valLabelOpacity").textContent = parsed.opacity;
+        }
+        if (d.tileLabelRadius != null) {
+          document.getElementById("labelRadius").value = d.tileLabelRadius;
+          document.getElementById("valLabelRadius").textContent = d.tileLabelRadius;
         }
 
         // 中央画像をプレビュー背景に
@@ -468,7 +576,7 @@
 
       // 賞名をFirestoreから取得してプレビュータイルに表示
       try {
-        const prizesSnap = await getDocs(query(collection(db, "prizes"), orderBy("rank", "asc")));
+        const prizesSnap = await getDocs(query(collection(db,"prizes"), orderBy("rank","asc")));
         const names = prizesSnap.docs.map(d => d.data().name);
         buildPreviewTiles(names.length ? names : ["1等","2等","3等","4等","5等"]);
       } catch(e) {
@@ -492,10 +600,36 @@
         msg.style.color = "green";
         msg.textContent = "✅ 保存しました！抽選画面に反映されます。";
         setTimeout(() => msg.textContent = "", 3000);
-      } catch(e) {
-        msg.style.color = "red";
-        msg.textContent = "❌ 保存エラー: " + e.message;
-      }
+      } catch(e) { msg.style.color="red"; msg.textContent="❌ 保存エラー: " + e.message; }
+    });
+
+    // ── アイコン保存 ──────────────────────────────────────────────
+    document.getElementById("iconSaveBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("iconSaveMsg");
+      try {
+        const labelBg = hexToRgba(
+          document.getElementById("labelColor").value,
+          document.getElementById("labelOpacity").value
+        );
+        await setDoc(configRef, {
+          tileIconFit:     selectedFit,
+          tileLabelBg:     labelBg,
+          tileLabelRadius: Number(document.getElementById("labelRadius").value),
+          updatedAt:       new Date()
+        }, { merge: true });
+        msg.style.color = "green";
+        msg.textContent = "✅ アイコン設定を保存しました！";
+        setTimeout(() => msg.textContent = "", 3000);
+      } catch(e) { msg.style.color="red"; msg.textContent="❌ " + e.message; }
+    });
+
+    // アイコンなしに戻す
+    document.getElementById("iconClearBtn").addEventListener("click", async () => {
+      if (!confirm("アイコン設定をクリアして色タイル表示に戻しますか？")) return;
+      await setDoc(configRef, { tileIconUrl: "" }, { merge: true });
+      previewIconUrl = ""; currentIconUrl = "";
+      updatePreview();
+      alert("アイコンをクリアしました。");
     });
 
     // ── タイトル ──────────────────────────────────────────────────
@@ -507,10 +641,10 @@
       const sel = document.querySelector('input[name="titleVisibility"]:checked');
       if (!sel) { alert("選択してください。"); return; }
       await setDoc(configRef, { titleVisible: sel.value === "true", updatedAt: new Date() }, { merge: true });
-      alert("タイトル表示設定が更新されました。"); loadConfig();
+      alert("タイトル表示設定が更新されました。");
     });
 
-    // ── 画像アップロード ──────────────────────────────────────────
+    // ── 画像アップロード共通 ──────────────────────────────────────
     async function uploadFile(file, folder, fsCol, barId, wrapId, msgId, btnId) {
       const btn=document.getElementById(btnId), bar=document.getElementById(barId);
       const wrap=document.getElementById(wrapId), msg=document.getElementById(msgId);
@@ -525,6 +659,12 @@
       } catch(e) { msg.textContent="❌ エラー: "+e.message; msg.style.color="red"; }
       finally { btn.disabled=false; setTimeout(()=>{ wrap.style.display="none"; bar.style.width="0%"; },2000); }
     }
+
+    document.getElementById("iconUploadBtn").addEventListener("click", () => {
+      const f=document.getElementById("iconFileInput").files[0];
+      if (!f) { alert("ファイルを選択してください。"); return; }
+      uploadFile(f,"tileIcons","displayTileIcons","iconProgressBar","iconProgressWrap","iconUploadMsg","iconUploadBtn");
+    });
     document.getElementById("bgUploadBtn").addEventListener("click", () => {
       const f=document.getElementById("bgFileInput").files[0];
       if (!f) { alert("ファイルを選択してください。"); return; }
@@ -550,9 +690,7 @@
       document.getElementById("centerUrlInput").value="";
     });
 
-    // ── 画像一覧 ──────────────────────────────────────────────────
-    let currentBgUrl="", currentCenterUrl="";
-
+    // ── 画像一覧レンダリング ──────────────────────────────────────
     function renderList(snapshot, containerId, radioName, currentUrl, fsCol) {
       const div=document.getElementById(containerId); div.innerHTML="";
       snapshot.forEach(s => {
@@ -566,6 +704,20 @@
       });
     }
 
+    function renderIconList(snapshot) {
+      const div=document.getElementById("iconList"); div.innerHTML="";
+      snapshot.forEach(s => {
+        const d=s.data(), c=document.createElement("div"); c.className="image-option";
+        const r=document.createElement("input"); r.type="radio"; r.name="iconSelection"; r.value=s.id;
+        if (d.url===currentIconUrl) r.checked=true; c.appendChild(r);
+        const img=document.createElement("img"); img.src=d.url; img.className="thumb"; c.appendChild(img);
+        const del=document.createElement("button"); del.textContent="削除"; del.className="delete-btn";
+        del.addEventListener("click", async()=>{ if(confirm("削除しますか？")) await deleteDoc(doc(db,"displayTileIcons",s.id)); });
+        c.appendChild(del); div.appendChild(c);
+      });
+    }
+
+    // ── 画像採用 ──────────────────────────────────────────────────
     async function selectImage(radioName, fsCol, configKey) {
       const sel=document.querySelector(`input[name="${radioName}"]:checked`);
       if (!sel) { alert("画像を選択してください。"); return; }
@@ -579,15 +731,32 @@
       }
     }
 
+    // アイコン採用
+    document.getElementById("iconSelectBtn").addEventListener("click", async () => {
+      const sel=document.querySelector('input[name="iconSelection"]:checked');
+      if (!sel) { alert("アイコンを選択してください。"); return; }
+      const snap=await getDoc(doc(db,"displayTileIcons",sel.value));
+      if (snap.exists()) {
+        await setDoc(configRef,{tileIconUrl:snap.data().url,updatedAt:new Date()},{merge:true});
+        previewIconUrl = snap.data().url;
+        currentIconUrl = snap.data().url;
+        updatePreview();
+        alert("アイコンが採用されました。");
+      }
+    });
+
+    // ── Image List Setup ─────────────────────────────────────────
     function setupImageLists() {
       getDoc(configRef).then(s => {
         if (s.exists()) {
           currentBgUrl     = s.data().currentBgImageUrl     || "";
           currentCenterUrl = s.data().currentCenterImageUrl || "";
+          currentIconUrl   = s.data().tileIconUrl           || "";
         }
       });
       onSnapshot(collection(db,"displayBgImages"),     s=>renderList(s,"bgList",    "bgSelection",    currentBgUrl,    "displayBgImages"));
       onSnapshot(collection(db,"displayCenterImages"), s=>renderList(s,"centerList","centerSelection",currentCenterUrl,"displayCenterImages"));
+      onSnapshot(collection(db,"displayTileIcons"),    s=>renderIconList(s));
       document.getElementById("bgSelectBtn").addEventListener("click",     ()=>selectImage("bgSelection",    "displayBgImages",    "currentBgImageUrl"));
       document.getElementById("centerSelectBtn").addEventListener("click", ()=>selectImage("centerSelection","displayCenterImages","currentCenterImageUrl"));
     }
