@@ -419,21 +419,30 @@
         const card = document.createElement("div");
         card.className = "preset-card"; card.dataset.id = p.id;
         const row = document.createElement("div"); row.className = "sample-row";
+
+        // 透明プリセットはチェック柄で表示
+        const isClear = p.id === 'clear';
+        const checker = 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 10px 10px';
+
         [
-          { bg:p.bg,  color:p.color,  border:p.border,  text:'賞' },
-          { bg:p.aBg, color:'#333',   border:p.aBorder, text:'▶'  },
-          { bg:p.wBg, color:p.wColor, border:p.wBorder, text:'★'  },
+          { bg: isClear ? checker : p.bg,  color: isClear ? '#333' : p.color,  border: isClear ? '#bbb' : p.border,  text:'賞' },
+          { bg: p.aBg,                      color: '#333',                        border: p.aBorder === 'transparent' ? '#bbb' : p.aBorder, text:'▶' },
+          { bg: p.wBg,                      color: p.wColor,                      border: p.wBorder === 'transparent' ? '#bbb' : p.wBorder, text:'★' },
         ].forEach(s => {
           const t = document.createElement("div"); t.className = "sample-tile";
           t.style.background = s.bg; t.style.color = s.color; t.style.borderColor = s.border;
           t.textContent = s.text; row.appendChild(t);
         });
+
         const b = document.createElement("div"); b.className = "sample-btn";
-        b.style.background = p.btnBg; b.style.color = p.btnColor;
+        b.style.background = p.btnBg || 'rgba(0,0,0,0.75)';
+        b.style.color = p.btnColor;
         b.style.border = p.btnBorder || "none"; b.textContent = "GO";
         row.appendChild(b); card.appendChild(row);
+
         const lbl = document.createElement("div"); lbl.className = "preset-label";
         lbl.textContent = p.label; card.appendChild(lbl);
+
         card.addEventListener("click", () => {
           document.querySelectorAll(".preset-card").forEach(c => c.classList.remove("selected"));
           card.classList.add("selected"); selectedPresetId = p.id;
