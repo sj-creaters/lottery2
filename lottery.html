@@ -26,30 +26,81 @@
       grid-template-columns: repeat(3, 1fr);
       justify-items: center; align-items: center;
     }
+
+    /* ── タイル本体 ── */
     .tile {
+      position: relative;
       width: 97%; height: var(--tile-height, 40px);
       aspect-ratio: var(--tile-aspect, auto);
       display: flex; align-items: center; justify-content: center;
-      padding: 0 10px;
+      padding: 0;
       border: 2px solid var(--tile-border, #aaa);
       font-size: 14px; font-family: 'Arial Black', Gadget, sans-serif;
       font-weight: bold; border-radius: var(--tile-radius, 8px);
       background-color: var(--tile-bg, rgba(255,255,255,0.95));
       color: var(--tile-color, #333);
       box-sizing: border-box; overflow: hidden;
-      white-space: nowrap; text-overflow: ellipsis; text-align: center;
-      transition: background-color 0.15s;
+      text-align: center;
+      transition: background-color 0.15s, border-color 0.15s;
     }
-    .active {
-      background-color: var(--active-bg,    yellow)  !important;
-      border-color:     var(--active-border, orange)  !important;
-      color:            var(--active-color,  #333)    !important;
+    /* テキストのみモード */
+    .tile.text-only {
+      padding: 0 10px;
+      white-space: nowrap; text-overflow: ellipsis;
     }
-    .winner {
-      background-color: var(--winner-bg,    magenta) !important;
-      border-color:     var(--winner-border, red)     !important;
-      color:            var(--winner-color,  white)   !important;
+
+    /* ── アイコン画像 ── */
+    .tile-icon {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: var(--tile-icon-fit, cover);
+      z-index: 0; pointer-events: none;
     }
+
+    /* ── テキストラベル（アイコン上） ── */
+    .tile-label {
+      position: relative; z-index: 2;
+      background: var(--label-bg, rgba(0,0,0,0.6));
+      color: var(--tile-color, white);
+      padding: 3px 8px;
+      border-radius: var(--label-radius, 6px);
+      text-align: center;
+      word-break: break-word;
+      white-space: normal;
+      max-width: 92%;
+      font-size: inherit;
+      line-height: 1.4;
+    }
+
+    /* ── アクティブ・当選（テキストのみ） ── */
+    .active.text-only {
+      background-color: var(--active-bg, yellow) !important;
+      border-color:     var(--active-border, orange) !important;
+      color:            var(--active-color, #333) !important;
+    }
+    .winner.text-only {
+      background-color: var(--winner-bg, magenta) !important;
+      border-color:     var(--winner-border, red) !important;
+      color:            var(--winner-color, white) !important;
+    }
+
+    /* ── アクティブ・当選（アイコンあり：ラベルを変化） ── */
+    .active:not(.text-only) {
+      border-color: var(--active-border, orange) !important;
+    }
+    .active:not(.text-only) .tile-label {
+      background-color: var(--active-bg, yellow) !important;
+      color:            var(--active-color, #333) !important;
+    }
+    .winner:not(.text-only) {
+      border-color: var(--winner-border, red) !important;
+    }
+    .winner:not(.text-only) .tile-label {
+      background-color: var(--winner-bg, magenta) !important;
+      color:            var(--winner-color, white) !important;
+    }
+
+    /* ── スタートボタン ── */
     .start-btn {
       position: absolute; left: 50%;
       transform: translateX(-50%);
@@ -64,8 +115,8 @@
       transition: transform 0.15s;
     }
     .start-btn:active { transform: translateX(-50%) scale(0.93); }
-    #resultMessage { text-align: center; font-size: 20px; margin-top: 10px; }
-    /* ▼ 統計表示 */
+
+    /* ── 統計表示 ── */
     #statsDisplay {
       position: absolute; bottom: 6px; right: 8px;
       font-size: 11px; color: rgba(255,255,255,0.9);
@@ -74,6 +125,8 @@
       background: rgba(0,0,0,0.55);
       padding: 3px 7px; border-radius: 4px;
     }
+    #resultMessage { text-align: center; font-size: 20px; margin-top: 10px; }
+
     @media (max-width: 480px) {
       .tile { font-size: 12px; }
       .start-btn { width: 70px; height: 70px; font-size: 14px; }
@@ -92,8 +145,7 @@
       <h2 style="margin-bottom:16px;">抽選画面</h2>
       <input type="password" id="passwordInput" placeholder="パスワードを入力"
         style="width:100%;padding:8px;font-size:16px;margin-bottom:12px;box-sizing:border-box;"
-        onkeydown="if(event.key==='Enter') document.getElementById('loginBtn').click()"
-      /><br/>
+        onkeydown="if(event.key==='Enter') document.getElementById('loginBtn').click()"/><br/>
       <button id="loginBtn" style="padding:10px 20px;font-size:16px;cursor:pointer;">開く</button>
       <div id="loginError" style="color:red;margin-top:10px;font-size:14px;"></div>
     </div>
@@ -101,7 +153,7 @@
 
   <div id="mainContainer" style="display:none;">
     <div class="center-container">
-      <img id="centerImage" src="" alt="中央画像" />
+      <img id="centerImage" src="" alt="" />
       <div id="tilesOverlay" class="prizes-overlay"></div>
       <button id="startBtn" class="start-btn">スタート</button>
       <div id="statsDisplay">--</div>
@@ -115,7 +167,7 @@
       from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
     import {
       getFirestore, collection, query, orderBy, onSnapshot,
-      doc, getDoc, getDocs, addDoc
+      doc, getDocs, addDoc
     } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -131,42 +183,18 @@
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
-
     const STAFF_EMAIL = "mi3254@sendai-mitsukoshi.co.jp";
-
-    // ── 認証状態を監視 ────────────────────────────────────────
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        document.getElementById("loginOverlay").style.display = "none";
-        document.getElementById("mainContainer").style.display = "block";
-        loadDisplayConfig();
-      }
-    });
-
-    function loadDisplayConfig() { watchDisplayConfig(); }
-
-    // ── ログインボタン ────────────────────────────────────────
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const password = document.getElementById("passwordInput").value;
-      const errDiv   = document.getElementById("loginError");
-      errDiv.textContent = "";
-      try {
-        await signInWithEmailAndPassword(auth, STAFF_EMAIL, password);
-      } catch(e) {
-        errDiv.textContent = "パスワードが違います";
-      }
-    });
 
     // ── カラープリセット ──────────────────────────────────────
     const PRESETS = [
-      { id:'classic',  bg:'rgba(255,255,255,0.95)', color:'#222',  border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'magenta',              wBorder:'red',     wColor:'white', btnBg:'rgba(0,0,0,0.85)',          btnColor:'white', btnBorder:'none',                         btnShadow:'0 3px 10px rgba(0,0,0,0.5)' },
-      { id:'dark',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',     aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'#FF1493',              wBorder:'red',     wColor:'white', btnBg:'#111',                      btnColor:'white', btnBorder:'2px solid #555',               btnShadow:'0 0 12px rgba(255,255,255,0.15)' },
-      { id:'gold',     bg:'#FFD700',                color:'#333',  border:'#B8860B',  aBg:'#FF8C00', aBorder:'#FF4500', aColor:'white', wBg:'#DC143C',              wBorder:'#8B0000', wColor:'white', btnBg:'linear-gradient(135deg,#FFD700,#FFA000)', btnColor:'#333', btnBorder:'3px solid #B8860B', btnShadow:'0 3px 12px rgba(180,120,0,0.6)' },
-      { id:'navy',     bg:'#1a237e',                color:'white', border:'#3949ab',  aBg:'#00E5FF', aBorder:'#00ACC1', aColor:'#111',  wBg:'#FFD700',              wBorder:'#FFA000', wColor:'#222',  btnBg:'#0d1b6e',                   btnColor:'white', btnBorder:'2px solid #5c6bc0',            btnShadow:'0 3px 12px rgba(0,0,80,0.5)' },
+      { id:'classic',  bg:'rgba(255,255,255,0.95)', color:'#222',  border:'#aaa',     aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'magenta', wBorder:'red',     wColor:'white',   btnBg:'rgba(0,0,0,0.85)',  btnColor:'white', btnBorder:'none',                         btnShadow:'0 3px 10px rgba(0,0,0,0.5)' },
+      { id:'dark',     bg:'rgba(0,0,0,0.82)',       color:'white', border:'#555',     aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'#FF1493', wBorder:'red',     wColor:'white',   btnBg:'#111',              btnColor:'white', btnBorder:'2px solid #555',               btnShadow:'0 0 12px rgba(255,255,255,0.15)' },
+      { id:'gold',     bg:'#FFD700',                color:'#333',  border:'#B8860B',  aBg:'#FF8C00', aBorder:'#FF4500', aColor:'white', wBg:'#DC143C', wBorder:'#8B0000', wColor:'white',   btnBg:'linear-gradient(135deg,#FFD700,#FFA000)', btnColor:'#333', btnBorder:'3px solid #B8860B', btnShadow:'0 3px 12px rgba(180,120,0,0.6)' },
+      { id:'navy',     bg:'#1a237e',                color:'white', border:'#3949ab',  aBg:'#00E5FF', aBorder:'#00ACC1', aColor:'#111',  wBg:'#FFD700', wBorder:'#FFA000', wColor:'#222',    btnBg:'#0d1b6e',           btnColor:'white', btnBorder:'2px solid #5c6bc0',            btnShadow:'0 3px 12px rgba(0,0,80,0.5)' },
       { id:'frost',    bg:'rgba(255,255,255,0.72)', color:'#111',  border:'rgba(255,255,255,0.5)', aBg:'rgba(255,230,0,0.92)', aBorder:'orange', aColor:'#222', wBg:'rgba(255,0,180,0.92)', wBorder:'red', wColor:'white', btnBg:'rgba(255,255,255,0.88)', btnColor:'#111', btnBorder:'2px solid rgba(0,0,0,0.25)', btnShadow:'0 3px 10px rgba(0,0,0,0.2)' },
       { id:'frostd',   bg:'rgba(0,0,0,0.65)',       color:'white', border:'rgba(0,0,0,0.4)',       aBg:'rgba(255,220,0,0.92)', aBorder:'orange', aColor:'#222', wBg:'rgba(255,20,147,0.92)', wBorder:'red', wColor:'white', btnBg:'rgba(0,0,0,0.72)', btnColor:'white', btnBorder:'2px solid rgba(255,255,255,0.3)', btnShadow:'0 3px 10px rgba(0,0,0,0.5)' },
-      { id:'red',      bg:'#c62828',                color:'white', border:'#b71c1c',  aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'white',                wBorder:'#c62828', wColor:'#c62828', btnBg:'#b71c1c',                btnColor:'white', btnBorder:'3px solid #7f0000',            btnShadow:'0 3px 12px rgba(180,0,0,0.6)' },
-      { id:'emerald',  bg:'#00695c',                color:'white', border:'#004d40',  aBg:'#FFEB3B', aBorder:'#F9A825', aColor:'#222',  wBg:'#FF6F00',              wBorder:'#E65100', wColor:'white', btnBg:'#004d40',                   btnColor:'white', btnBorder:'2px solid #00897b',            btnShadow:'0 3px 12px rgba(0,80,60,0.5)' },
+      { id:'red',      bg:'#c62828',                color:'white', border:'#b71c1c',  aBg:'#FFD700', aBorder:'orange',   aColor:'#222',  wBg:'white',   wBorder:'#c62828', wColor:'#c62828', btnBg:'#b71c1c',           btnColor:'white', btnBorder:'3px solid #7f0000',            btnShadow:'0 3px 12px rgba(180,0,0,0.6)' },
+      { id:'emerald',  bg:'#00695c',                color:'white', border:'#004d40',  aBg:'#FFEB3B', aBorder:'#F9A825', aColor:'#222',  wBg:'#FF6F00', wBorder:'#E65100', wColor:'white',   btnBg:'#004d40',           btnColor:'white', btnBorder:'2px solid #00897b',            btnShadow:'0 3px 12px rgba(0,80,60,0.5)' },
     ];
 
     function applyPreset(id) {
@@ -187,7 +215,7 @@
       r.setProperty('--btn-shadow',   p.btnShadow);
     }
 
-    // ── 表示設定リアルタイム同期 ──────────────────────────────
+    // ── 形状マップ ────────────────────────────────────────────
     const SHAPE_MAP = {
       rect:    { radius: '4px',  aspect: 'auto' },
       rounded: { radius: '16px', aspect: 'auto' },
@@ -195,25 +223,46 @@
       circle:  { radius: '50%',  aspect: '1'    },
     };
 
+    // ── アイコン設定（グローバル状態） ────────────────────────
+    let tileIconUrl    = '';
+    let prizesList     = [];
+    let historyDocs    = [];
+
+    // ── 認証 ─────────────────────────────────────────────────
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("mainContainer").style.display = "block";
+        watchDisplayConfig();
+      }
+    });
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      if (document.getElementById("passwordInput").value === '') return;
+      const err = document.getElementById("loginError");
+      err.textContent = "";
+      try { await signInWithEmailAndPassword(auth, STAFF_EMAIL, document.getElementById("passwordInput").value); }
+      catch(e) { err.textContent = "パスワードが違います"; }
+    });
+
+    // ── 表示設定リアルタイム同期 ──────────────────────────────
     function watchDisplayConfig() {
       onSnapshot(doc(db, "displaySettings", "config"), snap => {
         if (!snap.exists()) return;
         const d = snap.data();
 
         // タイトル
-        const titleElem = document.getElementById("pageTitle");
-        if (d.titleVisible !== false && d.title) {
-          titleElem.textContent = d.title; titleElem.style.display = "block";
-        } else { titleElem.style.display = "none"; }
+        const te = document.getElementById("pageTitle");
+        if (d.titleVisible !== false && d.title) { te.textContent = d.title; te.style.display = "block"; }
+        else { te.style.display = "none"; }
 
-        // 背景・中央画像
+        // 画像
         if (d.currentBgImageUrl) {
           document.body.style.backgroundImage = `url('${d.currentBgImageUrl}')`;
           document.body.style.backgroundRepeat = "repeat";
         }
         document.getElementById("centerImage").src = d.currentCenterImageUrl || "";
 
-        // タイル位置・ボタン位置
+        // 位置
         const ov = document.getElementById("tilesOverlay");
         ov.style.top    = (d.tileTop    ?? 40) + "%";
         ov.style.bottom = (d.tileBottom ?? 30) + "%";
@@ -222,30 +271,79 @@
         // カラープリセット
         applyPreset(d.colorPreset || "classic");
 
-        // タイル高さ・形状
+        // 形状・高さ
         const sh = SHAPE_MAP[d.tileShape || 'rounded'] || SHAPE_MAP.rounded;
         const rs = document.documentElement.style;
         rs.setProperty('--tile-radius', sh.radius);
         rs.setProperty('--tile-aspect', sh.aspect);
         rs.setProperty('--tile-height', sh.aspect === '1' ? 'auto' : (d.tileHeight ?? 40) + 'px');
+
+        // ── アイコン設定 ──────────────────────────────────────
+        tileIconUrl = d.tileIconUrl || '';
+        rs.setProperty('--tile-icon-fit', d.tileIconFit || 'cover');
+        rs.setProperty('--label-bg',      d.tileLabelBg || 'rgba(0,0,0,0.6)');
+        rs.setProperty('--label-radius',  (d.tileLabelRadius ?? 6) + 'px');
+
+        // タイル再構築（アイコン設定が変わったため）
+        buildTiles();
       });
     }
 
-    // ── 統計表示 ─────────────────────────────────────────────
-    function updateStats(historyDocs, prizesList) {
-      const today = new Date();
-      today.setHours(0,0,0,0);
+    // ── タイル構築 ────────────────────────────────────────────
+    const tilesOverlay = document.getElementById("tilesOverlay");
 
-      // 今日の抽選回数
+    function buildTiles() {
+      tilesOverlay.innerHTML = "";
+      tilesOverlay.style.gridTemplateColumns = `repeat(${Math.min(prizesList.length, 3)}, 1fr)`;
+
+      prizesList.forEach(prize => {
+        const tile = document.createElement("div");
+        tile.dataset.id = prize.id;
+
+        if (tileIconUrl) {
+          // ── アイコンモード ──
+          tile.className = "tile";
+          const img = document.createElement("img");
+          img.className = "tile-icon";
+          img.src = tileIconUrl;
+          img.alt = "";
+          tile.appendChild(img);
+
+          const label = document.createElement("div");
+          label.className = "tile-label";
+          label.textContent = prize.name;
+          tile.appendChild(label);
+        } else {
+          // ── テキストのみモード（従来） ──
+          tile.className = "tile text-only";
+          tile.textContent = prize.name;
+        }
+
+        tilesOverlay.appendChild(tile);
+      });
+    }
+
+    // ── 賞リスナー ────────────────────────────────────────────
+    onSnapshot(query(collection(db, "prizes"), orderBy("rank", "asc")), snapshot => {
+      prizesList = snapshot.docs.map(s => ({ id: s.id, ...s.data() }));
+      buildTiles();
+      updateStats();
+    });
+
+    // ── 履歴リスナー（統計用） ────────────────────────────────
+    onSnapshot(collection(db, "history"), snapshot => {
+      historyDocs = snapshot.docs.map(s => s.data());
+      updateStats();
+    });
+
+    // ── 統計表示 ─────────────────────────────────────────────
+    function updateStats() {
+      const today = new Date(); today.setHours(0,0,0,0);
       const todayCount = historyDocs.filter(d => {
         const t = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
         return t >= today;
       }).length;
-
-      // トータル抽選回数
       const totalDrawn = historyDocs.length;
-
-      // 残数・総合計
       const counts = {};
       historyDocs.forEach(d => { counts[d.prizeId] = (counts[d.prizeId]||0)+1; });
       let remaining = 0, totalQty = 0;
@@ -253,34 +351,9 @@
         totalQty  += p.quantity;
         remaining += Math.max(0, p.quantity - (counts[p.id]||0));
       });
-
-      // 表示：今日-トータル-残数-総合計
       document.getElementById("statsDisplay").textContent =
         `${todayCount}-${totalDrawn}-${remaining}-${totalQty}`;
     }
-
-    // ── 賞タイル ─────────────────────────────────────────────
-    const tilesOverlay = document.getElementById("tilesOverlay");
-    let prizesList = [];
-    let historyDocs = [];
-
-    onSnapshot(query(collection(db, "prizes"), orderBy("rank", "asc")), snapshot => {
-      prizesList = snapshot.docs.map(s => ({ id: s.id, ...s.data() }));
-      tilesOverlay.style.gridTemplateColumns = `repeat(${Math.min(prizesList.length,3)}, 1fr)`;
-      tilesOverlay.innerHTML = "";
-      prizesList.forEach(prize => {
-        const tile = document.createElement("div");
-        tile.className = "tile"; tile.textContent = prize.name; tile.dataset.id = prize.id;
-        tilesOverlay.appendChild(tile);
-      });
-      updateStats(historyDocs, prizesList);
-    });
-
-    // 履歴リスナー（統計更新用）
-    onSnapshot(collection(db, "history"), snapshot => {
-      historyDocs = snapshot.docs.map(s => s.data());
-      updateStats(historyDocs, prizesList);
-    });
 
     // ── ビープ音 ─────────────────────────────────────────────
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -312,8 +385,12 @@
       for (const item of weighted) { r -= item.weight; if (r <= 0) { preselectedWinner = item.prize; break; } }
     }
 
-    function clearActive() { document.querySelectorAll(".tile").forEach(t => t.classList.remove("active","winner")); }
-    function randIdx(max, excl) { let i; do { i = Math.floor(Math.random()*max); } while (i===excl); return i; }
+    function clearActive() {
+      document.querySelectorAll(".tile").forEach(t => t.classList.remove("active","winner"));
+    }
+    function randIdx(max, excl) {
+      let i; do { i = Math.floor(Math.random()*max); } while (i===excl); return i;
+    }
 
     function animate() {
       const tiles = document.querySelectorAll(".tile");
