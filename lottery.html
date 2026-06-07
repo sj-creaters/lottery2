@@ -280,9 +280,10 @@
 
         // ── アイコン設定 ──────────────────────────────────────
         tileIconUrl = d.tileIconUrl || '';
-        rs.setProperty('--tile-icon-fit', d.tileIconFit || 'cover');
-        rs.setProperty('--label-bg',      d.tileLabelBg || 'rgba(0,0,0,0.6)');
-        rs.setProperty('--label-radius',  (d.tileLabelRadius ?? 6) + 'px');
+        rs.setProperty('--tile-icon-fit',  d.tileIconFit  || 'cover');
+        rs.setProperty('--tile-icon-size', (d.tileIconSize ?? 100) + '%');
+        rs.setProperty('--label-bg',       d.tileLabelBg  || 'rgba(0,0,0,0.6)');
+        rs.setProperty('--label-radius',   (d.tileLabelRadius ?? 6) + 'px');
 
         // タイル再構築（アイコン設定が変わったため）
         buildTiles();
