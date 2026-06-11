@@ -488,21 +488,19 @@
           label.style.cssText = `position:relative;z-index:2;background:${labelBg};color:${p.color};padding:2px 5px;border-radius:${labelR};font-size:6px;text-align:center;word-break:break-word;white-space:normal;max-width:92%;`;
           label.textContent = name;
           tile.appendChild(label);
-          tile.style.background = p.bg;
-          tile.style.justifyContent = "center";
-          tile.style.display = "flex";
-          tile.style.alignItems = "center";
         } else {
           // テキストモード
           tile.innerHTML = name;
-          tile.style.background = p.bg;
-          tile.style.color = p.color;
           tile.style.overflow = "hidden";
           tile.style.whiteSpace = "nowrap";
         }
 
-        tile.style.borderColor  = p.border;
-        tile.style.borderRadius = sh.radius;
+        // 透明プリセットの場合は枠も消す
+        const isClear = p.id === 'clear';
+        tile.style.background   = isClear ? 'rgba(0,0,0,0)' : p.bg;
+        tile.style.color        = p.color;
+        tile.style.borderColor  = isClear ? 'transparent' : p.border;
+        tile.style.borderWidth  = isClear ? '0' : '1px';
         if (sh.aspect === '1') {
           tile.style.height = 'auto';
           tile.style.aspectRatio = '1';
